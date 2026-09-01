@@ -1,0 +1,90 @@
+networks:
+  turnoya-net:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    driver: local
+
+services:
+  # Base de datos MySQL donde persisten clientes y turnos.
+  mysql:
+    image: mysql:8.0
+    container_name: turnoya-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      # Se expone tambien al host para poder conectarse con un cliente SQL local si hace falta.
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - turnoya-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # Administrador web de la base de datos (util para inspeccionar tablas sin cliente SQL propio).
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: turnoya-phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: ${MYSQL_USER}
+      PMA_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "${PHPMYADMIN_PORT:-8081}:80"
+    networks:
+      - turnoya-net
+
+  # API REST de Turno Ya (Spring Boot). Se construye a partir de backend/Dockerfile.
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: turnoya-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      SUPERADMIN_USERNAME: ${SUPERADMIN_USERNAME}
+      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD}
+      SUPERADMIN_CORREO: ${SUPERADMIN_CORREO}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    networks:
+      - turnoya-net
+
+  # Frontend estatico (index.html/app.js/styles.css) servido con Apache HTTP Server.
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: turnoya-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    volumes:
+      # Monta el codigo fuente para poder editarlo sin reconstruir la imagen (dev).
+      - ./frontend/src:/usr/local/apache2/htdocs
+    ports:
+      - "${FRONTEND_PORT:-8082}:80"
+    networks:
+      - turnoya-net

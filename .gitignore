@@ -1,0 +1,13 @@
+# Credenciales locales, no se versionan.
+.env
+
+# Backend (Maven / Spring Boot)
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+*.class
+*.log
+
+# IDEs
+.idea/
+*.iml
+.vscode/

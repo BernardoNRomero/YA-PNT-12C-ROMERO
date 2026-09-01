@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Turno Ya, gestión simple de turnos." />
+    <title>Turno Ya | Gestión de turnos</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Turno Ya, inicio">
+        <span class="brand-mark">TY</span>
+        <span>Turno Ya</span>
+      </a>
+      <nav id="main-nav" aria-label="Navegación principal"></nav>
+      <div id="user-box" class="user-box" hidden>
+        <span id="user-name"></span>
+        <button class="button" type="button" id="logout-btn">Salir</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- Login / registro -->
+      <section id="vista-auth" class="auth-grid">
+        <div class="panel form-panel">
+          <p class="eyebrow">Ya tengo cuenta</p>
+          <h2>Iniciar sesión</h2>
+          <form id="login-form" novalidate>
+            <label>Usuario
+              <input name="nombreUsuario" type="text" required />
+            </label>
+            <label>Contraseña
+              <input name="password" type="password" required />
+            </label>
+            <p class="form-message" id="login-message" role="alert"></p>
+            <button class="button primary full" type="submit">Ingresar</button>
+          </form>
+        </div>
+
+        <div class="panel form-panel">
+          <p class="eyebrow">Soy nuevo</p>
+          <h2>Crear una cuenta</h2>
+          <form id="register-form" novalidate>
+            <label>Quiero
+              <select name="rol" id="register-rol" required>
+                <option value="CLIENTE">Pedir turnos (cliente)</option>
+                <option value="ADMIN">Dar turnos, tengo una tienda (administrador)</option>
+              </select>
+            </label>
+            <label id="register-tienda-label">Nombre de la tienda
+              <input name="nombreTienda" type="text" placeholder="Ej. Peluquería Ana" />
+            </label>
+            <label>Nombre y apellido
+              <input name="nombreCompleto" type="text" required />
+            </label>
+            <label>Usuario
+              <input name="nombreUsuario" type="text" required minlength="3" />
+            </label>
+            <label>Correo electrónico
+              <input name="correo" type="email" required />
+            </label>
+            <label>Contraseña
+              <input name="password" type="password" required minlength="8" />
+            </label>
+            <p class="form-message" id="register-message" role="alert"></p>
+            <button class="button primary full" type="submit">Crear cuenta</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Cliente -->
+      <section id="vista-cliente" hidden>
+        <div class="tabs" data-panel="cliente">
+          <button class="tab-btn active" data-tab="tiendas">Tiendas disponibles</button>
+          <button class="tab-btn" data-tab="mis-turnos">Mis turnos</button>
+          <button class="tab-btn" data-tab="perfil">Mi perfil</button>
+        </div>
+
+        <div class="tab-content" data-tab-content="tiendas">
+          <h2>Tiendas disponibles</h2>
+          <div id="tiendas-list" class="tiendas-grid"></div>
+        </div>
+
+        <div class="tab-content" data-tab-content="mis-turnos" hidden>
+          <h2>Mis turnos</h2>
+          <div id="mis-turnos-list" class="turnos-list"></div>
+        </div>
+
+        <div class="tab-content" data-tab-content="perfil" hidden>
+          <h2>Mi perfil</h2>
+          <form id="perfil-cliente-form" class="perfil-form" novalidate></form>
+        </div>
+      </section>
+
+      <!-- Admin de tienda -->
+      <section id="vista-admin" hidden>
+        <div class="tabs" data-panel="admin">
+          <button class="tab-btn active" data-tab="agenda">Agenda</button>
+          <button class="tab-btn" data-tab="horarios">Horarios de atención</button>
+          <button class="tab-btn" data-tab="tienda">Mi tienda</button>
+          <button class="tab-btn" data-tab="perfil">Mi perfil</button>
+        </div>
+
+        <div class="tab-content" data-tab-content="agenda">
+          <div class="panel-heading">
+            <h2>Agenda de turnos</h2>
+            <label class="select-label">Estado
+              <select id="admin-estado-filter">
+                <option value="">Todos</option>
+                <option value="PENDIENTE">Pendientes</option>
+                <option value="ACEPTADO">Aceptados</option>
+                <option value="REALIZADO">Realizados</option>
+                <option value="RECHAZADO">Rechazados</option>
+                <option value="CANCELADO">Cancelados</option>
+              </select>
+            </label>
+          </div>
+          <div id="admin-resumen" class="metrics"></div>
+          <div id="admin-agenda-list" class="turnos-list"></div>
+        </div>
+
+        <div class="tab-content" data-tab-content="horarios" hidden>
+          <h2>Horarios de atención</h2>
+          <form id="horario-form" class="form-row-inline" novalidate>
+            <label>Día
+              <select name="diaSemana" required>
+                <option value="LUNES">Lunes</option>
+                <option value="MARTES">Martes</option>
+                <option value="MIERCOLES">Miércoles</option>
+                <option value="JUEVES">Jueves</option>
+                <option value="VIERNES">Viernes</option>
+                <option value="SABADO">Sábado</option>
+                <option value="DOMINGO">Domingo</option>
+              </select>
+            </label>
+            <label>Desde
+              <input name="horaInicio" type="time" required />
+            </label>
+            <label>Hasta
+              <input name="horaFin" type="time" required />
+            </label>
+            <button class="button primary" type="submit">Agregar</button>
+          </form>
+          <p class="form-message" id="horario-message" role="alert"></p>
+          <div id="horarios-list" class="turnos-list"></div>
+        </div>
+
+        <div class="tab-content" data-tab-content="tienda" hidden>
+          <h2>Mi tienda</h2>
+          <form id="tienda-form" class="perfil-form" novalidate>
+            <label>Nombre
+              <input name="nombre" type="text" required />
+            </label>
+            <label>Descripción
+              <input name="descripcion" type="text" />
+            </label>
+            <label>Dirección
+              <input name="direccion" type="text" />
+            </label>
+            <p class="form-message" id="tienda-message" role="alert"></p>
+            <button class="button primary" type="submit">Guardar</button>
+          </form>
+        </div>
+
+        <div class="tab-content" data-tab-content="perfil" hidden>
+          <h2>Mi perfil</h2>
+          <form id="perfil-admin-form" class="perfil-form" novalidate></form>
+        </div>
+      </section>
+
+      <!-- Super administrador -->
+      <section id="vista-superadmin" hidden>
+        <div class="tabs" data-panel="superadmin">
+          <button class="tab-btn active" data-tab="estadisticas">Estadísticas</button>
+          <button class="tab-btn" data-tab="usuarios">Usuarios</button>
+        </div>
+
+        <div class="tab-content" data-tab-content="estadisticas">
+          <h2>Estadísticas generales</h2>
+          <div id="estadisticas-cards" class="metrics metrics-wide"></div>
+        </div>
+
+        <div class="tab-content" data-tab-content="usuarios" hidden>
+          <div class="panel-heading">
+            <h2>Gestión de usuarios</h2>
+            <button class="button primary" type="button" id="nuevo-usuario-btn">+ Nuevo usuario</button>
+          </div>
+          <form id="usuario-form" class="perfil-form" hidden novalidate>
+            <input type="hidden" name="id" />
+            <label>Nombre de usuario
+              <input name="nombreUsuario" type="text" required />
+            </label>
+            <label>Correo
+              <input name="correo" type="email" required />
+            </label>
+            <label>Nombre completo
+              <input name="nombreCompleto" type="text" required />
+            </label>
+            <label>Rol
+              <select name="rol" required>
+                <option value="CLIENTE">CLIENTE</option>
+                <option value="ADMIN">ADMIN</option>
+                <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+              </select>
+            </label>
+            <label>Contraseña <small>(vacío = no cambiar)</small>
+              <input name="password" type="password" minlength="8" />
+            </label>
+            <label class="checkbox-label">
+              <input name="activo" type="checkbox" checked /> Activo
+            </label>
+            <p class="form-message" id="usuario-message" role="alert"></p>
+            <div class="form-actions">
+              <button class="button primary" type="submit">Guardar</button>
+              <button class="button" type="button" id="cancelar-usuario-btn">Cancelar</button>
+            </div>
+          </form>
+          <table class="usuarios-table" id="usuarios-table">
+            <thead>
+              <tr><th>Usuario</th><th>Correo</th><th>Nombre</th><th>Rol</th><th>Activo</th><th></th></tr>
+            </thead>
+            <tbody id="usuarios-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
