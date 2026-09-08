@@ -47,7 +47,7 @@ public class Usuario {
     private String nombreCompleto;
 
     @Lob
-    @Column(name = "imagen_perfil")
+    @Column(name = "imagen_perfil", columnDefinition = "LONGTEXT")
     private String imagenPerfil;
 
     @Enumerated(EnumType.STRING)

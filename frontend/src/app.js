@@ -160,6 +160,13 @@ function renderPerfilForm(formId, usuario) {
   fileInput.addEventListener("change", () => {
     const file = fileInput.files[0];
     if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      const message = document.getElementById(`${formId}-message`);
+      message.classList.remove("success");
+      message.textContent = "La imagen no debe superar los 2 MB.";
+      fileInput.value = "";
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       imagenPerfil = reader.result;
@@ -227,7 +234,7 @@ async function cargarTiendas() {
         <p class="tienda-direccion">${escapeHtml(tienda.direccion || "")}</p>
         <p class="tienda-horarios">${horarios.map((h) => `${h.diaSemana} ${h.horaInicio.slice(0, 5)}-${h.horaFin.slice(0, 5)}`).join(", ") || "Sin horarios cargados"}</p>
         <form class="pedir-turno-form">
-          <label>Fecha <input name="fecha" type="date" required /></label>
+          <label>Fecha <input name="fecha" type="date" min="${new Date().toISOString().split('T')[0]}" required /></label>
           <label>Horario <input name="horario" type="time" required /></label>
           <label>Servicio <input name="servicio" type="text" required placeholder="Ej. Corte" /></label>
           <button class="button primary" type="submit">Pedir turno</button>

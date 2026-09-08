@@ -32,6 +32,7 @@ public class Tienda {
     private String nombre;
 
     @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String descripcion;
 
     private String direccion;
