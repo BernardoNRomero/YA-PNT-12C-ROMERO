@@ -1,6 +1,6 @@
 package com.turnoya.backend.security;
 
-import com.turnoya.backend.repository.UsuarioRepository;
+import com.turnoya.backend.usuario.UsuarioRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

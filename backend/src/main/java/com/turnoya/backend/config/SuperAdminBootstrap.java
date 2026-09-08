@@ -1,8 +1,8 @@
 package com.turnoya.backend.config;
 
-import com.turnoya.backend.model.Rol;
-import com.turnoya.backend.model.Usuario;
-import com.turnoya.backend.repository.UsuarioRepository;
+import com.turnoya.backend.usuario.Rol;
+import com.turnoya.backend.usuario.Usuario;
+import com.turnoya.backend.usuario.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;

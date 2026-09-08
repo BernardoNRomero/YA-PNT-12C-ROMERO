@@ -1,6 +1,6 @@
 package com.turnoya.backend.security;
 
-import com.turnoya.backend.model.Usuario;
+import com.turnoya.backend.usuario.Usuario;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
