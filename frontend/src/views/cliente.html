@@ -1,0 +1,23 @@
+<!-- Cliente -->
+<section id="vista-cliente" hidden>
+  <div class="tabs" data-panel="cliente">
+    <button class="tab-btn active" data-tab="tiendas">Tiendas disponibles</button>
+    <button class="tab-btn" data-tab="mis-turnos">Mis turnos</button>
+    <button class="tab-btn" data-tab="perfil">Mi perfil</button>
+  </div>
+
+  <div class="tab-content" data-tab-content="tiendas">
+    <h2>Tiendas disponibles</h2>
+    <div id="tiendas-list" class="tiendas-grid"></div>
+  </div>
+
+  <div class="tab-content" data-tab-content="mis-turnos" hidden>
+    <h2>Mis turnos</h2>
+    <div id="mis-turnos-list" class="turnos-list"></div>
+  </div>
+
+  <div class="tab-content" data-tab-content="perfil" hidden>
+    <h2>Mi perfil</h2>
+    <form id="perfil-cliente-form" class="perfil-form" novalidate></form>
+  </div>
+</section>

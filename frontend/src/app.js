@@ -85,44 +85,131 @@ function initTabs() {
   });
 }
 
-// ---------- Autenticacion ----------
+// ---------- Carga de vistas/componentes HTML ----------
 
-document.getElementById("register-rol").addEventListener("change", (event) => {
-  document.getElementById("register-tienda-label").hidden = event.target.value !== "ADMIN";
-});
-document.getElementById("register-tienda-label").hidden = document.getElementById("register-rol").value !== "ADMIN";
+async function cargarVistas() {
+  const [headerHtml, authHtml, clienteHtml, adminHtml, superadminHtml] = await Promise.all([
+    fetch("views/header.html").then((r) => r.text()),
+    fetch("views/auth.html").then((r) => r.text()),
+    fetch("views/cliente.html").then((r) => r.text()),
+    fetch("views/admin.html").then((r) => r.text()),
+    fetch("views/superadmin.html").then((r) => r.text()),
+  ]);
 
-document.getElementById("login-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const data = Object.fromEntries(new FormData(event.target));
-  const message = document.getElementById("login-message");
-  try {
-    const auth = await apiFetch("/api/auth/login", { method: "POST", body: JSON.stringify(data) });
-    guardarSesion(auth);
-    event.target.reset();
-    message.textContent = "";
-    mostrarVista();
-  } catch (error) {
-    message.textContent = error.message;
-  }
-});
+  document.getElementById("app-header").outerHTML = headerHtml;
+  document.getElementById("app-main").innerHTML = authHtml + clienteHtml + adminHtml + superadminHtml;
+}
 
-document.getElementById("register-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const data = Object.fromEntries(new FormData(event.target));
-  const message = document.getElementById("register-message");
-  try {
-    const auth = await apiFetch("/api/auth/register", { method: "POST", body: JSON.stringify(data) });
-    guardarSesion(auth);
-    event.target.reset();
-    message.textContent = "";
-    mostrarVista();
-  } catch (error) {
-    message.textContent = error.message;
-  }
-});
+let usuarioForm;
 
-document.getElementById("logout-btn").addEventListener("click", cerrarSesion);
+function configurarEventos() {
+  // Autenticación
+  const registerRol = document.getElementById("register-rol");
+  const registerTiendaLabel = document.getElementById("register-tienda-label");
+
+  registerRol.addEventListener("change", (event) => {
+    registerTiendaLabel.hidden = event.target.value !== "ADMIN";
+  });
+  registerTiendaLabel.hidden = registerRol.value !== "ADMIN";
+
+  document.getElementById("login-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const data = Object.fromEntries(new FormData(event.target));
+    const message = document.getElementById("login-message");
+    try {
+      const auth = await apiFetch("/api/auth/login", { method: "POST", body: JSON.stringify(data) });
+      guardarSesion(auth);
+      event.target.reset();
+      message.textContent = "";
+      mostrarVista();
+    } catch (error) {
+      message.textContent = error.message;
+    }
+  });
+
+  document.getElementById("register-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const data = Object.fromEntries(new FormData(event.target));
+    const message = document.getElementById("register-message");
+    try {
+      const auth = await apiFetch("/api/auth/register", { method: "POST", body: JSON.stringify(data) });
+      guardarSesion(auth);
+      event.target.reset();
+      message.textContent = "";
+      mostrarVista();
+    } catch (error) {
+      message.textContent = error.message;
+    }
+  });
+
+  document.getElementById("logout-btn").addEventListener("click", cerrarSesion);
+
+  // Admin
+  document.getElementById("admin-estado-filter").addEventListener("change", cargarAgendaAdmin);
+
+  document.getElementById("horario-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const data = Object.fromEntries(new FormData(event.target));
+    const message = document.getElementById("horario-message");
+    try {
+      await apiFetch("/api/horarios", {
+        method: "POST",
+        body: JSON.stringify({ diaSemana: data.diaSemana, horaInicio: `${data.horaInicio}:00`, horaFin: `${data.horaFin}:00` }),
+      });
+      message.classList.add("success");
+      message.textContent = "Horario agregado.";
+      event.target.reset();
+      cargarHorarios();
+    } catch (error) {
+      message.classList.remove("success");
+      message.textContent = error.message;
+    }
+  });
+
+  document.getElementById("tienda-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const data = Object.fromEntries(new FormData(event.target));
+    const message = document.getElementById("tienda-message");
+    try {
+      await apiFetch("/api/tiendas/mia", { method: "PUT", body: JSON.stringify(data) });
+      message.classList.add("success");
+      message.textContent = "Tienda actualizada.";
+    } catch (error) {
+      message.classList.remove("success");
+      message.textContent = error.message;
+    }
+  });
+
+  // Superadmin
+  usuarioForm = document.getElementById("usuario-form");
+  document.getElementById("nuevo-usuario-btn").addEventListener("click", () => abrirFormularioUsuario(null));
+  document.getElementById("cancelar-usuario-btn").addEventListener("click", () => (usuarioForm.hidden = true));
+
+  usuarioForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const data = Object.fromEntries(new FormData(usuarioForm));
+    const message = document.getElementById("usuario-message");
+    const payload = {
+      nombreUsuario: data.nombreUsuario,
+      correo: data.correo,
+      nombreCompleto: data.nombreCompleto,
+      rol: data.rol,
+      activo: usuarioForm.activo.checked,
+      password: data.password || null,
+    };
+    try {
+      if (data.id) {
+        await apiFetch(`/api/admin/usuarios/${data.id}`, { method: "PUT", body: JSON.stringify(payload) });
+      } else {
+        await apiFetch("/api/admin/usuarios", { method: "POST", body: JSON.stringify(payload) });
+      }
+      usuarioForm.hidden = true;
+      cargarUsuarios();
+    } catch (error) {
+      message.textContent = error.message;
+    }
+  });
+}
 
 // ---------- Perfil (comun a cliente y admin): nombre, imagen y contraseña ----------
 
@@ -306,8 +393,6 @@ async function cargarMisTurnos() {
 
 // ---------- Admin: agenda, horarios, tienda ----------
 
-document.getElementById("admin-estado-filter").addEventListener("change", cargarAgendaAdmin);
-
 async function cargarAgendaAdmin() {
   const estado = document.getElementById("admin-estado-filter").value;
   const contenedor = document.getElementById("admin-agenda-list");
@@ -387,25 +472,6 @@ async function cargarHorarios() {
   });
 }
 
-document.getElementById("horario-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const data = Object.fromEntries(new FormData(event.target));
-  const message = document.getElementById("horario-message");
-  try {
-    await apiFetch("/api/horarios", {
-      method: "POST",
-      body: JSON.stringify({ diaSemana: data.diaSemana, horaInicio: `${data.horaInicio}:00`, horaFin: `${data.horaFin}:00` }),
-    });
-    message.classList.add("success");
-    message.textContent = "Horario agregado.";
-    event.target.reset();
-    cargarHorarios();
-  } catch (error) {
-    message.classList.remove("success");
-    message.textContent = error.message;
-  }
-});
-
 async function cargarMiTienda() {
   try {
     const tienda = await apiFetch("/api/tiendas/mia");
@@ -417,20 +483,6 @@ async function cargarMiTienda() {
     // Sin tienda asociada: no debería pasar para un ADMIN, se ignora silenciosamente.
   }
 }
-
-document.getElementById("tienda-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const data = Object.fromEntries(new FormData(event.target));
-  const message = document.getElementById("tienda-message");
-  try {
-    await apiFetch("/api/tiendas/mia", { method: "PUT", body: JSON.stringify(data) });
-    message.classList.add("success");
-    message.textContent = "Tienda actualizada.";
-  } catch (error) {
-    message.classList.remove("success");
-    message.textContent = error.message;
-  }
-});
 
 // ---------- Super administrador ----------
 
@@ -476,12 +528,8 @@ async function cargarUsuarios() {
   });
 }
 
-const usuarioForm = document.getElementById("usuario-form");
-
-document.getElementById("nuevo-usuario-btn").addEventListener("click", () => abrirFormularioUsuario(null));
-document.getElementById("cancelar-usuario-btn").addEventListener("click", () => (usuarioForm.hidden = true));
-
 function abrirFormularioUsuario(usuario) {
+  if (!usuarioForm) usuarioForm = document.getElementById("usuario-form");
   usuarioForm.hidden = false;
   usuarioForm.reset();
   usuarioForm.id.value = usuario?.id || "";
@@ -495,32 +543,13 @@ function abrirFormularioUsuario(usuario) {
   document.getElementById("usuario-message").textContent = "";
 }
 
-usuarioForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const data = Object.fromEntries(new FormData(usuarioForm));
-  const message = document.getElementById("usuario-message");
-  const payload = {
-    nombreUsuario: data.nombreUsuario,
-    correo: data.correo,
-    nombreCompleto: data.nombreCompleto,
-    rol: data.rol,
-    activo: usuarioForm.activo.checked,
-    password: data.password || null,
-  };
-  try {
-    if (data.id) {
-      await apiFetch(`/api/admin/usuarios/${data.id}`, { method: "PUT", body: JSON.stringify(payload) });
-    } else {
-      await apiFetch("/api/admin/usuarios", { method: "POST", body: JSON.stringify(payload) });
-    }
-    usuarioForm.hidden = true;
-    cargarUsuarios();
-  } catch (error) {
-    message.textContent = error.message;
-  }
-});
-
 // ---------- Arranque ----------
 
-initTabs();
-mostrarVista();
+async function init() {
+  await cargarVistas();
+  configurarEventos();
+  initTabs();
+  mostrarVista();
+}
+
+init();

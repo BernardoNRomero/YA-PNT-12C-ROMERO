@@ -1,0 +1,75 @@
+<!-- Admin de tienda -->
+<section id="vista-admin" hidden>
+  <div class="tabs" data-panel="admin">
+    <button class="tab-btn active" data-tab="agenda">Agenda</button>
+    <button class="tab-btn" data-tab="horarios">Horarios de atención</button>
+    <button class="tab-btn" data-tab="tienda">Mi tienda</button>
+    <button class="tab-btn" data-tab="perfil">Mi perfil</button>
+  </div>
+
+  <div class="tab-content" data-tab-content="agenda">
+    <div class="panel-heading">
+      <h2>Agenda de turnos</h2>
+      <label class="select-label">Estado
+        <select id="admin-estado-filter">
+          <option value="">Todos</option>
+          <option value="PENDIENTE">Pendientes</option>
+          <option value="ACEPTADO">Aceptados</option>
+          <option value="REALIZADO">Realizados</option>
+          <option value="RECHAZADO">Rechazados</option>
+          <option value="CANCELADO">Cancelados</option>
+        </select>
+      </label>
+    </div>
+    <div id="admin-resumen" class="metrics"></div>
+    <div id="admin-agenda-list" class="turnos-list"></div>
+  </div>
+
+  <div class="tab-content" data-tab-content="horarios" hidden>
+    <h2>Horarios de atención</h2>
+    <form id="horario-form" class="form-row-inline" novalidate>
+      <label>Día
+        <select name="diaSemana" required>
+          <option value="LUNES">Lunes</option>
+          <option value="MARTES">Martes</option>
+          <option value="MIERCOLES">Miércoles</option>
+          <option value="JUEVES">Jueves</option>
+          <option value="VIERNES">Viernes</option>
+          <option value="SABADO">Sábado</option>
+          <option value="DOMINGO">Domingo</option>
+        </select>
+      </label>
+      <label>Desde
+        <input name="horaInicio" type="time" required />
+      </label>
+      <label>Hasta
+        <input name="horaFin" type="time" required />
+      </label>
+      <button class="button primary" type="submit">Agregar</button>
+    </form>
+    <p class="form-message" id="horario-message" role="alert"></p>
+    <div id="horarios-list" class="turnos-list"></div>
+  </div>
+
+  <div class="tab-content" data-tab-content="tienda" hidden>
+    <h2>Mi tienda</h2>
+    <form id="tienda-form" class="perfil-form" novalidate>
+      <label>Nombre
+        <input name="nombre" type="text" required />
+      </label>
+      <label>Descripción
+        <input name="descripcion" type="text" />
+      </label>
+      <label>Dirección
+        <input name="direccion" type="text" />
+      </label>
+      <p class="form-message" id="tienda-message" role="alert"></p>
+      <button class="button primary" type="submit">Guardar</button>
+    </form>
+  </div>
+
+  <div class="tab-content" data-tab-content="perfil" hidden>
+    <h2>Mi perfil</h2>
+    <form id="perfil-admin-form" class="perfil-form" novalidate></form>
+  </div>
+</section>
