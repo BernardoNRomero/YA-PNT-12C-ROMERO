@@ -6,6 +6,7 @@ import com.turnoya.backend.dto.UsuarioAdminResponse;
 import com.turnoya.backend.exception.BusinessException;
 import com.turnoya.backend.model.EstadoTurno;
 import com.turnoya.backend.model.Rol;
+import com.turnoya.backend.model.Tienda;
 import com.turnoya.backend.model.Usuario;
 import com.turnoya.backend.repository.TiendaRepository;
 import com.turnoya.backend.repository.TurnoRepository;
@@ -69,7 +70,16 @@ public class AdminService {
         usuario.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         usuario.setRol(Rol.valueOf(request.getRol()));
         usuario.setActivo(request.getActivo() == null || request.getActivo());
-        return UsuarioAdminResponse.from(usuarioRepository.save(usuario));
+        usuario = usuarioRepository.save(usuario);
+
+        if (usuario.getRol() == Rol.ADMIN) {
+            Tienda tienda = new Tienda();
+            tienda.setNombre("Tienda de " + usuario.getNombreCompleto());
+            tienda.setAdmin(usuario);
+            tiendaRepository.save(tienda);
+        }
+
+        return UsuarioAdminResponse.from(usuario);
     }
 
     @Transactional
@@ -83,7 +93,14 @@ public class AdminService {
             usuario.setCorreo(request.getCorreo());
         }
         if (request.getRol() != null) {
-            usuario.setRol(Rol.valueOf(request.getRol()));
+            Rol nuevoRol = Rol.valueOf(request.getRol());
+            usuario.setRol(nuevoRol);
+            if (nuevoRol == Rol.ADMIN && tiendaRepository.findByAdminId(usuario.getId()).isEmpty()) {
+                Tienda tienda = new Tienda();
+                tienda.setNombre("Tienda de " + usuario.getNombreCompleto());
+                tienda.setAdmin(usuario);
+                tiendaRepository.save(tienda);
+            }
         }
         if (request.getActivo() != null) {
             usuario.setActivo(request.getActivo());
