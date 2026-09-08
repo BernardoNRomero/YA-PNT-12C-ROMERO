@@ -5,15 +5,20 @@ import com.turnoya.backend.dto.ResumenResponse;
 import com.turnoya.backend.dto.TurnoRequest;
 import com.turnoya.backend.dto.TurnoResponse;
 import com.turnoya.backend.exception.BusinessException;
+import com.turnoya.backend.model.DiaSemana;
 import com.turnoya.backend.model.EstadoTurno;
+import com.turnoya.backend.model.Horario;
 import com.turnoya.backend.model.Tienda;
 import com.turnoya.backend.model.Turno;
 import com.turnoya.backend.model.Usuario;
+import com.turnoya.backend.repository.HorarioRepository;
 import com.turnoya.backend.repository.TurnoRepository;
 import com.turnoya.backend.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -21,17 +26,44 @@ public class TurnoService {
 
     private final TurnoRepository turnoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final HorarioRepository horarioRepository;
     private final TiendaService tiendaService;
 
-    public TurnoService(TurnoRepository turnoRepository, UsuarioRepository usuarioRepository, TiendaService tiendaService) {
+    public TurnoService(TurnoRepository turnoRepository, UsuarioRepository usuarioRepository,
+                        HorarioRepository horarioRepository, TiendaService tiendaService) {
         this.turnoRepository = turnoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.horarioRepository = horarioRepository;
         this.tiendaService = tiendaService;
     }
 
     // El cliente solicita un turno en una tienda; queda PENDIENTE hasta que el admin lo trabaje.
     @Transactional
     public TurnoResponse crear(Long clienteId, TurnoRequest request) {
+        if (request.getFecha() == null) {
+            throw new BusinessException("La fecha es requerida.");
+        }
+        if (request.getHorario() == null) {
+            throw new BusinessException("El horario es requerido.");
+        }
+        if (request.getFecha().isBefore(LocalDate.now())) {
+            throw new BusinessException("No se puede solicitar un turno para una fecha pasada.");
+        }
+
+        Tienda tienda = tiendaService.buscarTiendaActivaPorId(request.getTiendaId());
+
+        DiaSemana diaSemana = mapDayOfWeek(request.getFecha().getDayOfWeek());
+        List<Horario> horariosEnDia = horarioRepository.findByTiendaIdAndDiaSemana(tienda.getId(), diaSemana);
+        if (horariosEnDia.isEmpty()) {
+            throw new BusinessException("La tienda no se encuentra disponible en la fecha seleccionada (" + diaSemana.name() + ").");
+        }
+        boolean horarioValido = horariosEnDia.stream().anyMatch(h ->
+                !request.getHorario().isBefore(h.getHoraInicio()) && !request.getHorario().isAfter(h.getHoraFin())
+        );
+        if (!horarioValido) {
+            throw new BusinessException("La tienda no se encuentra disponible en el horario seleccionado.");
+        }
+
         boolean horarioOcupado = turnoRepository
                 .findFirstByTiendaIdAndFechaAndHorarioAndEstadoIn(
                         request.getTiendaId(), request.getFecha(), request.getHorario(),
@@ -43,7 +75,6 @@ public class TurnoService {
 
         Usuario cliente = usuarioRepository.findById(clienteId)
                 .orElseThrow(() -> new BusinessException("Usuario no encontrado."));
-        Tienda tienda = tiendaService.buscarTiendaActivaPorId(request.getTiendaId());
 
         Turno turno = new Turno();
         turno.setFecha(request.getFecha());
@@ -53,6 +84,18 @@ public class TurnoService {
         turno.setCliente(cliente);
         turno.setTienda(tienda);
         return TurnoResponse.from(turnoRepository.save(turno));
+    }
+
+    private DiaSemana mapDayOfWeek(DayOfWeek dayOfWeek) {
+        return switch (dayOfWeek) {
+            case MONDAY -> DiaSemana.LUNES;
+            case TUESDAY -> DiaSemana.MARTES;
+            case WEDNESDAY -> DiaSemana.MIERCOLES;
+            case THURSDAY -> DiaSemana.JUEVES;
+            case FRIDAY -> DiaSemana.VIERNES;
+            case SATURDAY -> DiaSemana.SABADO;
+            case SUNDAY -> DiaSemana.DOMINGO;
+        };
     }
 
     @Transactional(readOnly = true)
