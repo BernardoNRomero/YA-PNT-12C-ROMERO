@@ -1,7 +1,7 @@
 # Carátula
 
 **Sistema:** Turno Ya - Gestión de turnos de atención
-**Integrantes:** Completar con nombres y apellidos del equipo
+**Integrante:** Romero Bernardo Nahuel
 **Repositorio:** `YA-PNT-12C-ROMERO`
 **Fecha de entrega:** Completar fecha de entrega
 
