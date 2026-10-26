@@ -11,3 +11,8 @@ backend/.mvn/wrapper/maven-wrapper.jar
 .idea/
 *.iml
 .vscode/
+
+# docs (Solo dejar .md para control de versiones)
+docs/*.png
+docs/*.doc
+docs/*.docx
