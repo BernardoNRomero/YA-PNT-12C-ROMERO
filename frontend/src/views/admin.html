@@ -54,6 +54,14 @@
   <div class="tab-content" data-tab-content="tienda" hidden>
     <h2>Mi tienda</h2>
     <form id="tienda-form" class="perfil-form" novalidate>
+      <div class="tienda-imagen-editor">
+        <img id="tienda-imagen-preview" class="tienda-imagen-preview" src="images/store-placeholder.svg" alt="Foto de mi tienda" />
+        <label class="button">Cambiar foto
+          <input name="imagenTiendaFile" type="file" accept="image/*" hidden />
+        </label>
+        <button id="tienda-imagen-remove" class="button" type="button">Quitar foto</button>
+        <small>La imagen no debe superar los 2 MB.</small>
+      </div>
       <label>Nombre
         <input name="nombre" type="text" required />
       </label>

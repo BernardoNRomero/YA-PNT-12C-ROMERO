@@ -9,6 +9,7 @@ public class TiendaRequest {
 
     private String descripcion;
     private String direccion;
+    private String imagenTienda;
 
     public String getNombre() {
         return nombre;
@@ -32,5 +33,13 @@ public class TiendaRequest {
 
     public void setDireccion(String direccion) {
         this.direccion = direccion;
+    }
+
+    public String getImagenTienda() {
+        return imagenTienda;
+    }
+
+    public void setImagenTienda(String imagenTienda) {
+        this.imagenTienda = imagenTienda;
     }
 }

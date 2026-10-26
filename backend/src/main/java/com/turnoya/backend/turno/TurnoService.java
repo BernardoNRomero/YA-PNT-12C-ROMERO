@@ -11,8 +11,10 @@ import com.turnoya.backend.usuario.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Service
@@ -22,13 +24,15 @@ public class TurnoService {
     private final UsuarioRepository usuarioRepository;
     private final HorarioRepository horarioRepository;
     private final TiendaService tiendaService;
+    private final Clock clock;
 
     public TurnoService(TurnoRepository turnoRepository, UsuarioRepository usuarioRepository,
-                        HorarioRepository horarioRepository, TiendaService tiendaService) {
+                        HorarioRepository horarioRepository, TiendaService tiendaService, Clock clock) {
         this.turnoRepository = turnoRepository;
         this.usuarioRepository = usuarioRepository;
         this.horarioRepository = horarioRepository;
         this.tiendaService = tiendaService;
+        this.clock = clock;
     }
 
     @Transactional
@@ -39,8 +43,13 @@ public class TurnoService {
         if (request.getHorario() == null) {
             throw new BusinessException("El horario es requerido.");
         }
-        if (request.getFecha().isBefore(LocalDate.now())) {
+        ZonedDateTime ahora = ZonedDateTime.now(clock);
+        LocalDate fechaActual = ahora.toLocalDate();
+        if (request.getFecha().isBefore(fechaActual)) {
             throw new BusinessException("No se puede solicitar un turno para una fecha pasada.");
+        }
+        if (request.getFecha().isEqual(fechaActual) && !request.getHorario().isAfter(ahora.toLocalTime())) {
+            throw new BusinessException("No se puede solicitar un turno para un horario que ya paso.");
         }
 
         Tienda tienda = tiendaService.buscarTiendaActivaPorId(request.getTiendaId());

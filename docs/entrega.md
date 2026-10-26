@@ -56,10 +56,11 @@
 
 **Descripción:** Un cliente elige una tienda disponible y solicita un turno.
 **Paso a paso:**
-1. Visualiza en la pantalla principal las tiendas activas junto a sus horarios de atención.
-2. Elige fecha, horario y servicio para una tienda.
-3. El sistema verifica los datos obligatorios y que el horario no esté ya ocupado en esa tienda.
-4. El turno se registra con estado "pendiente".
+1. Visualiza en la pantalla principal las tiendas activas con su foto (o una imagen por defecto), descripción y horarios de atención.
+2. Presiona "Pedir turno": se abre una pantalla ampliada con la foto, la descripción, la dirección y los horarios de la tienda.
+3. Elige fecha, horario y servicio en el formulario de esa pantalla.
+4. El sistema verifica los datos obligatorios, que la fecha/hora no haya pasado (según la zona horaria configurada) y que el horario no esté ocupado en esa tienda.
+5. El turno se registra con estado "pendiente".
 
 **Resultado esperado:** El turno aparece en "Mis turnos" del cliente y en la agenda del administrador de la tienda.
 
@@ -124,8 +125,17 @@
 +--------------------------------------------------------------+
 | Turno Ya   [Tiendas disponibles] [Mis turnos] [Mi perfil]  AR |
 +--------------------------------------------------------------+
-| Tienda A - horarios - [Fecha][Horario][Servicio][Pedir turno]|
-| Tienda B - horarios - [Fecha][Horario][Servicio][Pedir turno]|
+| [foto] Tienda A - descripción - horarios      [Pedir turno]  |
+| [foto] Tienda B - descripción - horarios      [Pedir turno]  |
++--------------------------------------------------------------+
+
+Al presionar "Pedir turno" se abre una pantalla ampliada:
++--------------------------------------------------------------+
+| Tienda A                                                [X]  |
+| [ Foto grande ]            | Fecha    [..........]           |
+| Dirección                  | Horario  [..........]           |
+| Sobre la tienda: ...       | Servicio [..........]           |
+| Horarios de atención       | [Confirmar turno]               |
 +--------------------------------------------------------------+
 ```
 
@@ -161,6 +171,8 @@
 - El correo debe tener formato válido.
 - El nombre de la tienda es obligatorio al registrarse como administrador.
 - No se permite registrar más de un turno en el mismo horario y fecha para una misma tienda.
+- No se permiten turnos en fechas pasadas ni en horarios del día actual que ya transcurrieron; se usa la zona horaria `APP_TIME_ZONE` (por defecto `America/Argentina/Buenos_Aires`) y el selector de fecha del frontend usa la fecha local.
+- La foto de la tienda (subida por su administrador) debe ser PNG, JPG, GIF o WEBP, de hasta 2 MB; el servidor lo valida. Sin foto se muestra una imagen por defecto.
 - Un turno solo puede pasar de pendiente a aceptado/rechazado, y de aceptado a realizado/cancelado (no se permiten otras transiciones).
 - Un cliente solo puede cancelar sus propios turnos, y solo si no fueron marcados como realizados.
 - Para cambiar la contraseña del perfil propio, se debe indicar correctamente la contraseña actual.
@@ -181,6 +193,9 @@
 - **RF11:** Todo usuario autenticado debe poder gestionar su perfil: nombre, foto e (opcionalmente) contraseña.
 - **RF12:** El super administrador debe poder visualizar estadísticas globales de usuarios, tiendas y turnos.
 - **RF13:** El super administrador debe poder dar de alta, modificar y eliminar usuarios de cualquier rol.
+- **RF14:** El administrador debe poder subir, cambiar y quitar la foto de su tienda.
+- **RF15:** El cliente debe ver la foto de cada tienda (o una imagen por defecto) y, al pedir turno, una pantalla ampliada con foto, descripción y demás información de la tienda.
+- **RF16:** El sistema debe rechazar turnos cuya fecha y hora ya hayan pasado.
 
 ## 8. Requisitos no funcionales
 
@@ -213,6 +228,7 @@
 | nombre | Texto | Nombre del negocio. |
 | descripcion | Texto | Descripción del negocio. |
 | direccion | Texto | Dirección física. |
+| imagenTienda | Texto largo | Foto de la tienda (imagen base64 embebida), cargada por su administrador. |
 | activa | Booleano | Indica si la tienda acepta turnos. |
 | idAdmin | Número | Referencia al Usuario (rol ADMIN) dueño de la tienda. |
 

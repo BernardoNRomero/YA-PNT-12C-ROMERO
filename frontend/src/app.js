@@ -21,6 +21,13 @@ function cerrarSesion() {
   mostrarVista();
 }
 
+function fechaLocalISO(fecha = new Date()) {
+  const anio = fecha.getFullYear();
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+  const dia = String(fecha.getDate()).padStart(2, "0");
+  return `${anio}-${mes}-${dia}`;
+}
+
 async function apiFetch(path, options = {}) {
   const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
   if (state.token) headers.Authorization = `Bearer ${state.token}`;
@@ -144,6 +151,8 @@ function configurarEventos() {
 
   document.getElementById("logout-btn").addEventListener("click", cerrarSesion);
 
+  configurarReservaTienda();
+
   // Admin
   document.getElementById("admin-estado-filter").addEventListener("change", cargarAgendaAdmin);
 
@@ -171,7 +180,15 @@ function configurarEventos() {
     const data = Object.fromEntries(new FormData(event.target));
     const message = document.getElementById("tienda-message");
     try {
-      await apiFetch("/api/tiendas/mia", { method: "PUT", body: JSON.stringify(data) });
+      await apiFetch("/api/tiendas/mia", {
+        method: "PUT",
+        body: JSON.stringify({
+          nombre: data.nombre,
+          descripcion: data.descripcion,
+          direccion: data.direccion,
+          imagenTienda: event.target.dataset.imagenTienda ?? "",
+        }),
+      });
       message.classList.add("success");
       message.textContent = "Tienda actualizada.";
     } catch (error) {
@@ -209,6 +226,85 @@ function configurarEventos() {
       message.textContent = error.message;
     }
   });
+}
+
+function configurarReservaTienda() {
+  const dialog = document.getElementById("tienda-detalle-dialog");
+  const form = document.getElementById("tienda-turno-form");
+  const fechaInput = form.elements.fecha;
+  const message = document.getElementById("tienda-turno-message");
+
+  document.getElementById("cerrar-tienda-dialog").addEventListener("click", () => dialog.close());
+  dialog.addEventListener("click", (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+  fechaInput.addEventListener("focus", () => {
+    fechaInput.min = fechaLocalISO();
+  });
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const data = Object.fromEntries(new FormData(form));
+    const submitButton = form.querySelector('[type="submit"]');
+    submitButton.disabled = true;
+    message.classList.remove("success");
+    message.textContent = "";
+
+    try {
+      await apiFetch("/api/turnos", {
+        method: "POST",
+        body: JSON.stringify({
+          tiendaId: Number(form.dataset.tiendaId),
+          fecha: data.fecha,
+          horario: `${data.horario}:00`,
+          servicio: data.servicio,
+        }),
+      });
+      message.classList.add("success");
+      message.textContent = "¡Solicitud enviada! La tienda confirmará tu turno.";
+      form.reset();
+      fechaInput.min = fechaLocalISO();
+      cargarMisTurnos();
+    } catch (error) {
+      message.textContent = error.message;
+    } finally {
+      submitButton.disabled = false;
+    }
+  });
+}
+
+function abrirDetalleTienda(tienda, horarios) {
+  const dialog = document.getElementById("tienda-detalle-dialog");
+  const imagen = document.getElementById("tienda-detalle-imagen");
+  const listaHorarios = document.getElementById("tienda-detalle-horarios");
+  const form = document.getElementById("tienda-turno-form");
+  const message = document.getElementById("tienda-turno-message");
+
+  document.getElementById("tienda-detalle-nombre").textContent = tienda.nombre;
+  document.getElementById("tienda-detalle-direccion").textContent = tienda.direccion || "Dirección no informada";
+  document.getElementById("tienda-detalle-descripcion").textContent =
+    tienda.descripcion || "Esta tienda todavía no agregó una descripción.";
+  imagen.alt = `Foto de ${tienda.nombre}`;
+  setImagenConRespaldo(imagen, tienda.imagenTienda);
+
+  listaHorarios.replaceChildren();
+  if (horarios.length === 0) {
+    const item = document.createElement("li");
+    item.textContent = "Sin horarios cargados";
+    listaHorarios.appendChild(item);
+  } else {
+    horarios.forEach((horario) => {
+      const item = document.createElement("li");
+      item.textContent = `${horario.diaSemana}: ${horario.horaInicio.slice(0, 5)}–${horario.horaFin.slice(0, 5)}`;
+      listaHorarios.appendChild(item);
+    });
+  }
+
+  form.reset();
+  form.dataset.tiendaId = tienda.id;
+  form.elements.fecha.min = fechaLocalISO();
+  message.classList.remove("success");
+  message.textContent = "";
+  dialog.showModal();
 }
 
 // ---------- Perfil (comun a cliente y admin): nombre, imagen y contraseña ----------
@@ -316,35 +412,16 @@ async function cargarTiendas() {
       const card = document.createElement("article");
       card.className = "tienda-card";
       card.innerHTML = `
+        <img class="tienda-imagen" alt="Foto de ${escapeHtml(tienda.nombre)}" />
         <h3>${escapeHtml(tienda.nombre)}</h3>
         <p>${escapeHtml(tienda.descripcion || "")}</p>
         <p class="tienda-direccion">${escapeHtml(tienda.direccion || "")}</p>
         <p class="tienda-horarios">${horarios.map((h) => `${h.diaSemana} ${h.horaInicio.slice(0, 5)}-${h.horaFin.slice(0, 5)}`).join(", ") || "Sin horarios cargados"}</p>
-        <form class="pedir-turno-form">
-          <label>Fecha <input name="fecha" type="date" min="${new Date().toISOString().split('T')[0]}" required /></label>
-          <label>Horario <input name="horario" type="time" required /></label>
-          <label>Servicio <input name="servicio" type="text" required placeholder="Ej. Corte" /></label>
-          <button class="button primary" type="submit">Pedir turno</button>
-        </form>
-        <p class="form-message"></p>
+        <button class="button primary tienda-card-reservar" type="button">Pedir turno</button>
       `;
-      card.querySelector("form").addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const data = Object.fromEntries(new FormData(event.target));
-        const message = card.querySelector(".form-message");
-        try {
-          await apiFetch("/api/turnos", {
-            method: "POST",
-            body: JSON.stringify({ tiendaId: tienda.id, fecha: data.fecha, horario: `${data.horario}:00`, servicio: data.servicio }),
-          });
-          message.classList.add("success");
-          message.textContent = "¡Turno solicitado! Quedó pendiente de confirmación.";
-          event.target.reset();
-          cargarMisTurnos();
-        } catch (error) {
-          message.classList.remove("success");
-          message.textContent = error.message;
-        }
+      setImagenConRespaldo(card.querySelector(".tienda-imagen"), tienda.imagenTienda);
+      card.querySelector(".tienda-card-reservar").addEventListener("click", () => {
+        abrirDetalleTienda(tienda, horarios);
       });
       contenedor.appendChild(card);
     }
@@ -479,9 +556,66 @@ async function cargarMiTienda() {
     form.nombre.value = tienda.nombre;
     form.descripcion.value = tienda.descripcion || "";
     form.direccion.value = tienda.direccion || "";
+    form.dataset.imagenTienda = tienda.imagenTienda || "";
+    mostrarImagenTienda(tienda.imagenTienda);
   } catch (error) {
     // Sin tienda asociada: no debería pasar para un ADMIN, se ignora silenciosamente.
   }
+}
+
+function mostrarImagenTienda(imagen) {
+  setImagenConRespaldo(document.getElementById("tienda-imagen-preview"), imagen);
+}
+
+function setImagenConRespaldo(elemento, imagen) {
+  const esImagenBase64 = typeof imagen === "string" && /^data:image\/[\w.+-]+;base64,/i.test(imagen);
+  elemento.onerror = () => {
+    elemento.onerror = null;
+    elemento.src = "images/store-placeholder.svg";
+  };
+  elemento.src = esImagenBase64 ? imagen : "images/store-placeholder.svg";
+}
+
+function configurarImagenTienda() {
+  const form = document.getElementById("tienda-form");
+  const fileInput = form.elements.imagenTiendaFile;
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const message = document.getElementById("tienda-message");
+    if (file.size > 2 * 1024 * 1024) {
+      message.classList.remove("success");
+      message.textContent = "La imagen no debe superar los 2 MB.";
+      fileInput.value = "";
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      message.classList.remove("success");
+      message.textContent = "Seleccioná un archivo de imagen válido.";
+      fileInput.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      form.dataset.imagenTienda = reader.result;
+      mostrarImagenTienda(reader.result);
+      message.textContent = "";
+    };
+    reader.onerror = () => {
+      message.classList.remove("success");
+      message.textContent = "No se pudo leer la imagen seleccionada.";
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById("tienda-imagen-remove").addEventListener("click", () => {
+    form.dataset.imagenTienda = "";
+    fileInput.value = "";
+    mostrarImagenTienda(null);
+  });
 }
 
 // ---------- Super administrador ----------
@@ -548,6 +682,7 @@ function abrirFormularioUsuario(usuario) {
 async function init() {
   await cargarVistas();
   configurarEventos();
+  configurarImagenTienda();
   initTabs();
   mostrarVista();
 }

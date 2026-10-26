@@ -32,6 +32,10 @@ public class Tienda {
     @Column(columnDefinition = "LONGTEXT")
     private String descripcion;
 
+    @Lob
+    @Column(name = "imagen_tienda", columnDefinition = "LONGTEXT")
+    private String imagenTienda;
+
     private String direccion;
 
     @Column(nullable = false)

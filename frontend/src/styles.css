@@ -532,6 +532,16 @@ select:focus {
   padding: 21px;
 }
 
+.tienda-card .tienda-imagen {
+  display: block;
+  width: calc(100% + 42px);
+  height: 180px;
+  margin: -21px -21px 18px;
+  object-fit: cover;
+  background: var(--teal-soft);
+  border-radius: 12px 12px 0 0;
+}
+
 .tienda-card h3 {
   margin: 0 0 8px;
 }
@@ -552,10 +562,144 @@ select:focus {
   border-radius: 8px;
 }
 
-.tienda-card form {
+.tienda-card-reservar {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.tienda-dialog {
+  width: min(1120px, calc(100vw - 36px));
+  max-width: 1120px;
+  max-height: min(92vh, 900px);
+  padding: 0;
+  overflow: auto;
+  color: var(--ink);
+  background: var(--paper);
+  border: 0;
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgb(13 33 30 / 28%);
+}
+
+.tienda-dialog::backdrop {
+  background: rgb(17 32 30 / 66%);
+  backdrop-filter: blur(3px);
+}
+
+.tienda-dialog-header {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: rgb(255 255 255 / 96%);
+  border-bottom: 1px solid var(--line);
+}
+
+.tienda-dialog-header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tienda-dialog-layout {
   display: grid;
-  gap: 11px;
-  margin-top: 16px;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.75fr);
+  align-items: start;
+  gap: 24px;
+  padding: 24px;
+}
+
+.tienda-dialog-informacion {
+  min-width: 0;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.tienda-detalle-imagen {
+  display: block;
+  width: 100%;
+  height: clamp(220px, 32vw, 360px);
+  object-fit: cover;
+  background: var(--teal-soft);
+}
+
+.tienda-detalle-contenido {
+  padding: 24px;
+}
+
+.tienda-detalle-contenido h2 {
+  margin: 0 0 4px;
+  font-size: clamp(24px, 3vw, 34px);
+  letter-spacing: -0.03em;
+}
+
+.tienda-detalle-contenido > .tienda-direccion {
+  margin: 0;
+}
+
+.tienda-detalle-seccion {
+  margin-top: 24px;
+}
+
+.tienda-detalle-seccion h3,
+.tienda-reserva-panel h3 {
+  margin: 0 0 10px;
+  font-size: 17px;
+}
+
+.tienda-detalle-seccion p {
+  margin: 0;
+  color: var(--muted);
+  white-space: pre-line;
+}
+
+.tienda-detalle-horarios {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tienda-detalle-horarios li {
+  padding: 10px 12px;
+  color: var(--muted);
+  background: #f5f8f7;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.tienda-reserva-panel {
+  position: sticky;
+  top: 80px;
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.tienda-reserva-panel > p {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.tienda-reserva-form {
+  display: grid;
+  gap: 13px;
+}
+
+.tienda-reserva-form .button {
+  width: 100%;
 }
 
 .turnos-list {
@@ -586,6 +730,28 @@ select:focus {
   display: grid;
   max-width: 520px;
   gap: 14px;
+}
+
+.tienda-imagen-editor {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tienda-imagen-preview {
+  width: 100%;
+  max-width: 320px;
+  height: 180px;
+  object-fit: cover;
+  background: var(--teal-soft);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.tienda-imagen-editor small {
+  width: 100%;
+  color: var(--muted);
 }
 
 .avatar-row {
@@ -711,8 +877,37 @@ select:focus {
   .auth-grid,
   .metrics,
   .metrics-wide,
-  .content-grid {
+  .content-grid,
+  .tienda-dialog-layout {
     grid-template-columns: 1fr;
+  }
+
+  .tienda-dialog {
+    width: calc(100vw - 20px);
+    max-height: 94vh;
+    border-radius: 14px;
+  }
+
+  .tienda-dialog-layout {
+    gap: 14px;
+    padding: 14px;
+  }
+
+  .tienda-dialog-header {
+    padding: 10px 14px;
+  }
+
+  .tienda-detalle-imagen {
+    height: 220px;
+  }
+
+  .tienda-detalle-contenido,
+  .tienda-reserva-panel {
+    padding: 18px;
+  }
+
+  .tienda-reserva-panel {
+    position: static;
   }
 
   .panel,

@@ -20,4 +20,45 @@
     <h2>Mi perfil</h2>
     <form id="perfil-cliente-form" class="perfil-form" novalidate></form>
   </div>
+
+  <dialog id="tienda-detalle-dialog" class="tienda-dialog" aria-labelledby="tienda-detalle-nombre">
+    <div class="tienda-dialog-header">
+      <p>Conocé el lugar</p>
+      <button id="cerrar-tienda-dialog" class="icon-button" type="button" aria-label="Cerrar detalle de tienda">×</button>
+    </div>
+    <div class="tienda-dialog-layout">
+      <div class="tienda-dialog-informacion">
+        <img id="tienda-detalle-imagen" class="tienda-detalle-imagen" alt="" />
+        <div class="tienda-detalle-contenido">
+          <h2 id="tienda-detalle-nombre"></h2>
+          <p id="tienda-detalle-direccion" class="tienda-direccion"></p>
+          <section class="tienda-detalle-seccion">
+            <h3>Sobre la tienda</h3>
+            <p id="tienda-detalle-descripcion"></p>
+          </section>
+          <section class="tienda-detalle-seccion">
+            <h3>Horarios de atención</h3>
+            <ul id="tienda-detalle-horarios" class="tienda-detalle-horarios"></ul>
+          </section>
+        </div>
+      </div>
+      <aside class="tienda-reserva-panel">
+        <h3>Solicitar un turno</h3>
+        <p>Elegí el día y horario que prefieras. La tienda confirmará tu solicitud.</p>
+        <form id="tienda-turno-form" class="tienda-reserva-form">
+          <label>Fecha
+            <input name="fecha" type="date" required />
+          </label>
+          <label>Horario
+            <input name="horario" type="time" required />
+          </label>
+          <label>Servicio
+            <input name="servicio" type="text" required maxlength="150" placeholder="¿Qué atención necesitás?" />
+          </label>
+          <p id="tienda-turno-message" class="form-message" role="alert" aria-live="polite"></p>
+          <button class="button primary" type="submit">Confirmar solicitud</button>
+        </form>
+      </aside>
+    </div>
+  </dialog>
 </section>
