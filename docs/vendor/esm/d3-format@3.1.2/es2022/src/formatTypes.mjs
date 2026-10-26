@@ -1,0 +1,3 @@
+/* esm.sh - d3-format@3.1.2/src/formatTypes */
+import i from"./formatDecimal.mjs";import e from"./formatPrefixAuto.mjs";import r from"./formatRounded.mjs";var m={"%":(o,t)=>(o*100).toFixed(t),b:o=>Math.round(o).toString(2),c:o=>o+"",d:i,e:(o,t)=>o.toExponential(t),f:(o,t)=>o.toFixed(t),g:(o,t)=>o.toPrecision(t),o:o=>Math.round(o).toString(8),p:(o,t)=>r(o*100,t),r,s:e,X:o=>Math.round(o).toString(16).toUpperCase(),x:o=>Math.round(o).toString(16)};export{m as default};
+//# sourceMappingURL=formatTypes.mjs.map

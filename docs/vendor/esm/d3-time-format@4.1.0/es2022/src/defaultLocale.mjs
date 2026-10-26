@@ -1,0 +1,3 @@
+/* esm.sh - d3-time-format@4.1.0/src/defaultLocale */
+import t from"./locale.mjs";var e,o,u,d,m;r({dateTime:"%x, %X",date:"%-m/%-d/%Y",time:"%-I:%M:%S %p",periods:["AM","PM"],days:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],shortDays:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],months:["January","February","March","April","May","June","July","August","September","October","November","December"],shortMonths:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]});function r(a){return e=t(a),o=e.format,u=e.parse,d=e.utcFormat,m=e.utcParse,e}export{r as default,o as timeFormat,u as timeParse,d as utcFormat,m as utcParse};
+//# sourceMappingURL=defaultLocale.mjs.map

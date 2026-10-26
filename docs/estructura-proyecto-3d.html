@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turno Ya - Estructura del proyecto 3D</title>
+<style>
+ html,body{height:100%}
+ body{margin:0;background:#0b0f19;font-family:sans-serif;color:#ddd;overflow:hidden}
+ #g{position:fixed;inset:0}
+ #panel{position:absolute;top:10px;left:10px;z-index:2;background:#000b;padding:10px 14px;border-radius:8px;font-size:13px;width:340px;max-width:calc(100vw - 48px);max-height:calc(100vh - 20px);overflow:auto;box-sizing:border-box}
+ button{background:#1f6feb;color:#fff;border:0;border-radius:4px;padding:6px 10px;margin:2px;cursor:pointer}
+ button:hover{background:#388bfd}
+ select,input{max-width:100%;box-sizing:border-box}
+ input{width:100%;margin:6px 0;padding:4px}
+ #step{margin-top:8px;color:#9cf;min-height:70px}
+ .lg div{cursor:pointer;display:inline-block;margin:2px 8px 2px 0}
+ .lg span{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}
+ #toggle{position:absolute;top:10px;right:10px;z-index:3;display:none}
+ @media (max-width:700px){
+  #panel{top:auto;bottom:0;left:0;right:0;width:auto;max-width:none;max-height:45vh;border-radius:12px 12px 0 0}
+  #panel.closed{display:none}
+  #toggle{display:block}
+ }
+</style>
+<script type="importmap">{"imports":{
+ "three":"./vendor/three/build/three.module.js",
+ "three/webgpu":"./vendor/three/webgpu-stub.js",
+ "three/examples/jsm/":"./vendor/three/examples/jsm/",
+ "3d-force-graph":"./vendor/esm/3d-force-graph@1.77.0/X-ZXRocmVl/es2022/3d-force-graph.mjs",
+ "three-spritetext":"./vendor/esm/three-spritetext@1.9.0/X-ZXRocmVl/es2022/three-spritetext.mjs"}}</script></head>
+<body>
+<button id="toggle">☰ Panel</button>
+<div id="panel">
+ <b>Turno Ya – estructura y camino de la información</b><br>
+ <select id="esc"></select>
+ <button id="play">▶ Reproducir recorrido</button>
+ <button id="stop">■ Detener</button>
+ <input id="q" placeholder="Buscar archivo...">
+ <div class="lg" id="legend"></div>
+ <div id="step">Click en un nodo para ver detalle. Elegí un recorrido para ver cómo viaja la información.</div>
+</div>
+<div id="g"></div>
+<script type="module">
+import ForceGraph3D from "3d-force-graph";
+import SpriteText from "three-spritetext";
+
+const GROUPS = {
+ frontend:{label:'Frontend', color:'#52d3c2'}, api:{label:'API y controladores', color:'#66a9ff'},
+ business:{label:'Servicios', color:'#b69aff'}, data:{label:'Persistencia y entidades', color:'#ffc46b'},
+ security:{label:'Seguridad y config', color:'#ff7f9b'}, infra:{label:'Infraestructura y pruebas', color:'#a6bed8'}};
+const N = (id, label, group, desc) => ({id, label, group, desc});
+const nodes = [
+ N('index','index.html','frontend','frontend/src/index.html. Punto de entrada de la SPA; carga estilos y app.js.'),
+ N('app','app.js','frontend','frontend/src/app.js. Carga las vistas, controla la sesión (localStorage) y consume la API REST.'),
+ N('styles','styles.css','frontend','frontend/src/styles.css. Estilos compartidos.'),
+ N('views','views/*.html','frontend','Header y vistas de autenticación, cliente, administrador y superadministrador.'),
+ N('images','images/','frontend','Recursos estáticos, como la imagen placeholder de tienda.'),
+ N('authCtrl','AuthController','api','auth/AuthController.java. Registro e inicio de sesión bajo /api/auth.'),
+ N('tiendaCtrl','TiendaController','api','tienda/TiendaController.java. Consulta de tiendas y edición de la tienda propia.'),
+ N('horarioCtrl','HorarioController','api','tienda/HorarioController.java. Horarios de atención de una tienda.'),
+ N('turnoCtrl','TurnoController','api','turno/TurnoController.java. Creación, consulta, cancelación y actualización de turnos.'),
+ N('usuarioCtrl','UsuarioController','api','usuario/UsuarioController.java. Perfil del usuario autenticado.'),
+ N('adminCtrl','AdminController','api','usuario/AdminController.java. Operaciones globales para SUPER_ADMIN.'),
+ N('authDtos','Auth DTOs','api','LoginRequest, RegisterRequest y AuthResponse.'),
+ N('turnoDtos','Turno DTOs','api','Requests y responses de turnos.'),
+ N('usuarioDtos','Usuario DTOs','api','Requests y responses de perfil, administración y estadísticas.'),
+ N('authSvc','AuthService','business','auth/AuthService.java. Registro y autenticación; coordina usuarios, tiendas y JWT.'),
+ N('tiendaSvc','TiendaService','business','tienda/TiendaService.java. Reglas de consulta y mantenimiento de tiendas.'),
+ N('horarioSvc','HorarioService','business','tienda/HorarioService.java. Reglas de horarios.'),
+ N('turnoSvc','TurnoService','business','turno/TurnoService.java. Reglas de turnos: fecha, tienda activa, horario y disponibilidad.'),
+ N('usuarioSvc','UsuarioService','business','usuario/UsuarioService.java. Actualiza el perfil propio.'),
+ N('adminSvc','AdminService','business','usuario/AdminService.java. Gestiona usuarios y estadísticas.'),
+ N('usuarioRepo','UsuarioRepository','data','Spring Data JPA de usuarios.'),
+ N('tiendaRepo','TiendaRepository','data','Spring Data JPA de tiendas.'),
+ N('horarioRepo','HorarioRepository','data','Spring Data JPA de horarios.'),
+ N('turnoRepo','TurnoRepository','data','Spring Data JPA de turnos.'),
+ N('usuarioEntity','Usuario','data','Entidad JPA de usuario y roles.'),
+ N('tiendaEntity','Tienda','data','Entidad JPA; relación uno a uno con el administrador.'),
+ N('horarioEntity','Horario','data','Entidad JPA de horario asociado a una tienda.'),
+ N('turnoEntity','Turno','data','Entidad JPA asociada a un cliente y una tienda.'),
+ N('mysql','MySQL 8','data','docker-compose.yml, volumen mysql-data. Hibernate crea/actualiza el esquema desde las entidades.'),
+ N('jwtFilter','JwtAuthFilter','security','security/JwtAuthFilter.java. Valida el token y establece la autenticación.'),
+ N('jwtService','JwtService','security','security/JwtService.java. Crea y valida tokens JWT.'),
+ N('userDetails','CustomUserDetailsService','security','Carga el usuario desde UsuarioRepository para Spring Security.'),
+ N('securityConfig','SecurityConfig','security','config/SecurityConfig.java. Permisos, CORS, sesiones sin estado y filtro JWT.'),
+ N('properties','application.properties','security','Conexión MySQL, JPA, JWT y parámetros de la app.'),
+ N('bootstrap','SuperAdminBootstrap','security','Crea el SUPER_ADMIN inicial si no existe.'),
+ N('compose','docker-compose.yml','infra','Orquesta frontend, backend, MySQL y phpMyAdmin.'),
+ N('dockerfiles','Dockerfiles','infra','Imágenes de backend y frontend.'),
+ N('env','.env.example','infra','Plantilla de variables: credenciales de DB, puertos y seguridad.'),
+ N('tests','Tests de servicios','infra','Pruebas unitarias de TiendaService y TurnoService.'),
+ N('pom','pom.xml','infra','Maven; Spring Boot 3.3.4, Java 17.'),
+ N('readme','README.md','infra','Servicios, configuración inicial y ejecución con Docker Compose.'),
+];
+
+const E = (s,t,label) => ({source:s, target:t, label});
+const links = [
+ E('index','app','carga'),E('index','styles','estilos'),E('app','views','inyecta vistas'),E('app','images','recursos'),
+ E('app','authCtrl','REST'),E('app','tiendaCtrl','REST'),E('app','horarioCtrl','REST'),E('app','turnoCtrl','REST'),E('app','usuarioCtrl','REST'),E('app','adminCtrl','REST'),
+ E('authCtrl','authSvc','delega'),E('tiendaCtrl','tiendaSvc','delega'),E('horarioCtrl','horarioSvc','delega'),E('turnoCtrl','turnoSvc','delega'),E('usuarioCtrl','usuarioSvc','delega'),E('adminCtrl','adminSvc','delega'),
+ E('authCtrl','authDtos','DTOs'),E('turnoCtrl','turnoDtos','DTOs'),E('usuarioCtrl','usuarioDtos','DTOs'),
+ E('authSvc','usuarioRepo','usuarios'),E('authSvc','tiendaRepo','tiendas'),E('authSvc','jwtService','token'),E('authSvc','userDetails','AuthenticationManager'),
+ E('tiendaSvc','tiendaRepo','tiendas'),E('tiendaSvc','usuarioRepo','administrador'),
+ E('horarioSvc','horarioRepo','horarios'),E('horarioSvc','tiendaSvc','valida tienda'),
+ E('turnoSvc','turnoRepo','turnos'),E('turnoSvc','usuarioRepo','cliente'),E('turnoSvc','horarioRepo','disponibilidad'),E('turnoSvc','tiendaSvc','tienda'),
+ E('usuarioSvc','usuarioRepo','perfil'),E('adminSvc','usuarioRepo','usuarios'),E('adminSvc','tiendaRepo','tiendas'),E('adminSvc','turnoRepo','estadísticas'),
+ E('usuarioRepo','usuarioEntity','JPA'),E('tiendaRepo','tiendaEntity','JPA'),E('horarioRepo','horarioEntity','JPA'),E('turnoRepo','turnoEntity','JPA'),
+ E('usuarioEntity','mysql','esquema'),E('tiendaEntity','mysql','esquema'),E('horarioEntity','mysql','esquema'),E('turnoEntity','mysql','esquema'),
+ E('turnoEntity','usuarioEntity','cliente'),E('turnoEntity','tiendaEntity','tienda'),E('horarioEntity','tiendaEntity','tienda'),E('tiendaEntity','usuarioEntity','admin'),
+ E('securityConfig','jwtFilter','registra filtro'),E('jwtFilter','jwtService','valida token'),E('jwtFilter','userDetails','carga usuario'),E('userDetails','usuarioRepo','busca usuario'),
+ E('jwtFilter','turnoCtrl','request autenticado'),E('bootstrap','usuarioRepo','crea admin'),
+ E('properties','mysql','configuración'),E('compose','mysql','servicio'),E('compose','dockerfiles','construye'),E('env','compose','variables'),E('compose','properties','configura API'),
+ E('tests','tiendaSvc','prueba'),E('tests','turnoSvc','prueba'),E('pom','tests','JUnit'),E('readme','compose','instrucciones'),
+ // caminos de retorno usados por los recorridos
+ E('authSvc','authCtrl','AuthResponse'),E('authCtrl','app','JSON + token'),
+ E('turnoRepo','turnoSvc','turno guardado'),E('turnoSvc','turnoCtrl','TurnoResponse'),E('turnoCtrl','app','JSON del turno'),
+];
+
+// Recorridos: [origen, destino, texto de la flecha, explicación del paso]
+const FLOWS = {
+ 1:{name:'Iniciar sesión', seq:[
+  ['app','authCtrl','POST /api/auth/login','app.js toma usuario y contraseña de login-form y las envía como JSON. El endpoint es público.'],
+  ['authCtrl','authSvc','valida LoginRequest','El controlador valida el request y delega la autenticación.'],
+  ['authSvc','userDetails','AuthenticationManager','Spring autentica usando CustomUserDetailsService.'],
+  ['userDetails','usuarioRepo','busca usuario','Se carga el usuario desde la base; Spring compara la contraseña con el hash BCrypt.'],
+  ['authSvc','jwtService','firma JWT','Con la cuenta validada se firma un token con usuario, rol y vencimiento.'],
+  ['authSvc','authCtrl','AuthResponse','Se arma AuthResponse (token, nombre, rol).'],
+  ['authCtrl','app','JSON + token','app.js guarda token y usuario en localStorage y muestra la vista según el rol.']]},
+ 2:{name:'Pedir un turno', seq:[
+  ['app','tiendaCtrl','GET /api/tiendas','La vista cliente lista tiendas (endpoint público).'],
+  ['app','horarioCtrl','GET horarios de la tienda','Se consultan los horarios para mostrar opciones.'],
+  ['app','turnoCtrl','POST /api/turnos + JWT','Se envía tiendaId, fecha, horario y servicio con el JWT en el header Authorization.'],
+  ['securityConfig','jwtFilter','filtro registrado','SecurityConfig instala JwtAuthFilter antes del controlador.'],
+  ['jwtFilter','jwtService','valida token','Se verifica firma y vencimiento del token.'],
+  ['jwtFilter','userDetails','carga usuario','Se obtiene el usuario para la autenticación.'],
+  ['userDetails','usuarioRepo','busca usuario','Consulta a la base.'],
+  ['jwtFilter','turnoCtrl','request autenticado','Spring verifica el rol CLIENTE y deja pasar la request.'],
+  ['turnoCtrl','turnoSvc','crear','Se delega la creación.'],
+  ['turnoSvc','horarioRepo','disponibilidad','Valida que el horario esté dentro de la atención del día.'],
+  ['turnoSvc','turnoRepo','guardar','Rechaza fechas pasadas, tienda inactiva o horario ocupado; si todo está bien guarda el turno PENDIENTE.'],
+  ['turnoRepo','turnoEntity','JPA','Se mapea a la entidad Turno.'],
+  ['turnoEntity','mysql','esquema','Se persiste en MySQL.'],
+  ['turnoRepo','turnoSvc','turno guardado','Vuelve el turno persistido.'],
+  ['turnoSvc','turnoCtrl','TurnoResponse','Se arma la respuesta.'],
+  ['turnoCtrl','app','JSON del turno','La interfaz confirma la solicitud y recarga los turnos del cliente.']]},
+};
+const key = (s,t) => s + '>' + t;
+const linkByKey = new Map(links.map(l => [key(l.source, l.target), l]));
+for (const f of Object.values(FLOWS)) f.seq.forEach(([s,t,label,desc], i) => {
+ const l = linkByKey.get(key(s,t));
+ if (!l) throw new Error('Falta el enlace ' + s + ' -> ' + t);
+ (l.steps ??= {})[f.name] = i;
+});
+const stepIndex = (l, f) => f ? l.steps?.[f.name] : undefined;
+
+const panel = document.getElementById('panel');
+document.getElementById('toggle').onclick = () => panel.classList.toggle('closed');
+const sel = document.getElementById('esc');
+sel.add(new Option('Estructura completa', 0));
+Object.entries(FLOWS).forEach(([k,f]) => sel.add(new Option(k + ' · ' + f.name, k)));
+const flow = () => FLOWS[sel.value];
+
+const hidden = new Set();
+const legend = document.getElementById('legend');
+Object.entries(GROUPS).forEach(([g,v]) => {
+ const d = document.createElement('div');
+ d.innerHTML = `<span style="background:${v.color}"></span>${v.label}`;
+ d.onclick = () => { hidden.has(g) ? hidden.delete(g) : hidden.add(g); d.style.opacity = hidden.has(g) ? .3 : 1; G.nodeVisibility(G.nodeVisibility()); G.linkVisibility(G.linkVisibility()); };
+ legend.appendChild(d);
+});
+
+let active = null, timer = null, query = '';
+const inFlow = l => !flow() || stepIndex(l, flow()) !== undefined;
+const isActive = l => active ? l === active : inFlow(l);
+const isHit = n => query && n.label.toLowerCase().includes(query);
+const mobile = () => innerWidth < 700;
+
+const G = ForceGraph3D()(document.getElementById('g'))
+ .graphData({nodes, links})
+ .backgroundColor('#0b0f19')
+ .nodeColor(n => isHit(n) ? '#ffffff' : GROUPS[n.group].color)
+ .nodeVal(n => ['mysql','app','turnoSvc','authSvc'].includes(n.id) ? 26 : 10)
+ .nodeLabel(n => `<b>${n.label}</b><br>${n.desc}`)
+ .nodeVisibility(n => !hidden.has(n.group))
+ .linkVisibility(l => !hidden.has(l.source.group) && !hidden.has(l.target.group))
+ .nodeThreeObjectExtend(true)
+ .nodeThreeObject(n => { const s = new SpriteText(n.label); s.color = '#fff'; s.textHeight = 3.2; s.position.y = 9; s.backgroundColor = '#0008'; s.padding = 1.5; return s; })
+ .linkColor(l => isActive(l) ? '#ffffff' : '#2a3140')
+ .linkWidth(l => l === active ? 2.5 : (flow() && isActive(l)) ? 0.8 : 0.1)
+ .linkOpacity(.8)
+ .linkDirectionalArrowLength(l => isActive(l) ? 5 : 0).linkDirectionalArrowRelPos(1)
+ .linkDirectionalParticles(l => flow() && isActive(l) ? 4 : 0)
+ .linkDirectionalParticleWidth(l => l === active ? 4 : 2)
+ .linkDirectionalParticleSpeed(l => l === active ? 0.02 : 0.006)
+ .linkDirectionalParticleColor(() => '#ffd33d')
+ .linkThreeObjectExtend(true)
+ .linkThreeObject(l => { const s = new SpriteText(l.label); s.color = '#9cc9ff'; s.textHeight = 2; return s; })
+ .linkPositionUpdate((sprite, {start, end}, l) => {
+  Object.assign(sprite.position, {x:(start.x+end.x)/2, y:(start.y+end.y)/2, z:(start.z+end.z)/2});
+  sprite.visible = !!flow() && isActive(l);
+ })
+ .onNodeClick(n => {
+  document.getElementById('step').innerHTML = `<b>${n.label}</b><br>${n.desc}`;
+  const r = 1 + 90 / Math.hypot(n.x, n.y, n.z);
+  G.cameraPosition({x:n.x*r, y:n.y*r, z:n.z*r}, n, 800);
+  if (mobile()) panel.classList.remove('closed');
+ });
+G.cooldownTicks(120).onEngineStop(() => { if (!timer) G.zoomToFit(600, 60); });
+setTimeout(() => { if (!timer) G.zoomToFit(600, 60); }, 3000);
+G.d3Force('link').distance(110);
+G.d3Force('charge').strength(-700);
+
+const refresh = () => {
+ G.nodeColor(G.nodeColor()).linkColor(G.linkColor()).linkWidth(G.linkWidth())
+  .linkDirectionalArrowLength(G.linkDirectionalArrowLength()).linkDirectionalParticles(G.linkDirectionalParticles());
+};
+sel.onchange = () => {
+ stop();
+ const f = flow();
+ document.getElementById('step').innerHTML = f ? `<b>${f.name}</b><br>${f.seq.length} pasos. Usá ▶ Reproducir recorrido para seguirlos uno a uno.` : 'Click en un nodo para ver detalle.';
+};
+document.getElementById('q').oninput = e => { query = e.target.value.trim().toLowerCase(); refresh(); };
+
+function play() {
+ stop();
+ const f = flow();
+ if (!f) { document.getElementById('step').textContent = 'Elegí primero un recorrido en el selector.'; return; }
+ let i = 0;
+ if (mobile()) panel.classList.remove('closed');
+ timer = setInterval(() => {
+  if (i >= f.seq.length) { stop(); return; }
+  const [s, t, label, desc] = f.seq[i++];
+  active = linkByKey.get(key(s, t));
+  const a = active.source, b = active.target;
+  document.getElementById('step').innerHTML = `<b>Paso ${i}/${f.seq.length}</b>: ${a.label} → ${b.label}<br><i>${label}</i><br>${desc}`;
+  const mx = (a.x+b.x)/2, my = (a.y+b.y)/2, mz = (a.z+b.z)/2;
+  const r = 1 + 220 / Math.max(1, Math.hypot(mx, my, mz));
+  G.cameraPosition({x:mx*r, y:my*r, z:mz*r + 40}, {x:mx, y:my, z:mz}, 900);
+  refresh();
+ }, 2600);
+}
+function stop() { clearInterval(timer); timer = null; active = null; refresh(); }
+document.getElementById('play').onclick = play;
+document.getElementById('stop').onclick = stop;
+</script></body></html>

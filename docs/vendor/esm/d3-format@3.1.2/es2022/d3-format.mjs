@@ -1,0 +1,3 @@
+/* esm.sh - d3-format@3.1.2 */
+import{default as o,format as f,formatPrefix as a}from"./src/defaultLocale.mjs";import{default as i}from"./src/locale.mjs";import{default as p,FormatSpecifier as l}from"./src/formatSpecifier.mjs";import{default as x}from"./src/precisionFixed.mjs";import{default as u}from"./src/precisionPrefix.mjs";import{default as n}from"./src/precisionRound.mjs";export{l as FormatSpecifier,f as format,o as formatDefaultLocale,i as formatLocale,a as formatPrefix,p as formatSpecifier,x as precisionFixed,u as precisionPrefix,n as precisionRound};
+//# sourceMappingURL=d3-format.mjs.map

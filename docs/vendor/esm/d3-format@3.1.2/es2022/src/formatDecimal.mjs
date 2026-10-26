@@ -1,0 +1,3 @@
+/* esm.sh - d3-format@3.1.2/src/formatDecimal */
+function r(e){return Math.abs(e=Math.round(e))>=1e21?e.toLocaleString("en").replace(/,/g,""):e.toString(10)}function o(e,n){if(!isFinite(e)||e===0)return null;var i=(e=n?e.toExponential(n-1):e.toExponential()).indexOf("e"),t=e.slice(0,i);return[t.length>1?t[0]+t.slice(2):t,+e.slice(i+1)]}export{r as default,o as formatDecimalParts};
+//# sourceMappingURL=formatDecimal.mjs.map

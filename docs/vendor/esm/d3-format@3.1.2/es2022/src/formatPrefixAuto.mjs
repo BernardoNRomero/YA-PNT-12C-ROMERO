@@ -1,0 +1,3 @@
+/* esm.sh - d3-format@3.1.2/src/formatPrefixAuto */
+import{formatDecimalParts as f}from"./formatDecimal.mjs";var c;function l(n,t){var i=f(n,t);if(!i)return c=void 0,n.toPrecision(t);var r=i[0],o=i[1],e=o-(c=Math.max(-8,Math.min(8,Math.floor(o/3)))*3)+1,a=r.length;return e===a?r:e>a?r+new Array(e-a+1).join("0"):e>0?r.slice(0,e)+"."+r.slice(e):"0."+new Array(1-e).join("0")+f(n,Math.max(0,t+e-1))[0]}export{l as default,c as prefixExponent};
+//# sourceMappingURL=formatPrefixAuto.mjs.map
