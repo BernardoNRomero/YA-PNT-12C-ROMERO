@@ -430,10 +430,64 @@ async function cargarTiendas() {
   }
 }
 
+let calendarioMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+function renderCalendarioTurnos(turnos) {
+  const cont = document.getElementById("mis-turnos-calendar");
+  if (!cont) return;
+  const anio = calendarioMes.getFullYear();
+  const mes = calendarioMes.getMonth();
+  const titulo = calendarioMes.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+  const offset = (new Date(anio, mes, 1).getDay() + 6) % 7;
+  const diasMes = new Date(anio, mes + 1, 0).getDate();
+  const pad = (n) => String(n).padStart(2, "0");
+
+  const porDia = {};
+  turnos.forEach((t) => {
+    (porDia[t.fecha] = porDia[t.fecha] || []).push(t);
+  });
+
+  let celdas = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
+    .map((d) => `<div class="cal-dow">${d}</div>`)
+    .join("");
+  for (let i = 0; i < offset; i++) celdas += `<div class="cal-day empty"></div>`;
+  for (let d = 1; d <= diasMes; d++) {
+    const key = `${anio}-${pad(mes + 1)}-${pad(d)}`;
+    const items = (porDia[key] || [])
+      .sort((a, b) => a.horario.localeCompare(b.horario))
+      .map(
+        (t) =>
+          `<span class="status cal-turno ${t.estado.toLowerCase()}" title="${escapeHtml(t.tiendaNombre)} · ${escapeHtml(t.servicio)} · ${t.estado}">${t.horario.slice(0, 5)} ${escapeHtml(t.tiendaNombre)}</span>`
+      )
+      .join("");
+    celdas += `<div class="cal-day"><span class="cal-num">${d}</span>${items}</div>`;
+  }
+
+  cont.innerHTML = `
+    <div class="cal-header">
+      <button type="button" class="icon-button" data-cal="prev" title="Mes anterior">‹</button>
+      <strong>${titulo}</strong>
+      <button type="button" class="icon-button" data-cal="next" title="Mes siguiente">›</button>
+    </div>
+    <div class="cal-grid">${celdas}</div>
+    <div class="cal-legend">
+      ${["PENDIENTE", "ACEPTADO", "REALIZADO", "RECHAZADO", "CANCELADO"]
+        .map((e) => `<span class="status ${e.toLowerCase()}">${e}</span>`)
+        .join("")}
+    </div>`;
+  cont.querySelectorAll("[data-cal]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      calendarioMes = new Date(anio, mes + (btn.dataset.cal === "next" ? 1 : -1), 1);
+      renderCalendarioTurnos(turnos);
+    });
+  });
+}
+
 async function cargarMisTurnos() {
   const contenedor = document.getElementById("mis-turnos-list");
   try {
     const turnos = await apiFetch("/api/turnos/mios");
+    renderCalendarioTurnos(turnos);
     if (turnos.length === 0) {
       contenedor.innerHTML = `<p class="empty-state">Todavía no pediste turnos.</p>`;
       return;
