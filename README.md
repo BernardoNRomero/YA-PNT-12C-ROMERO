@@ -14,13 +14,13 @@ Las credenciales iniciales del super administrador se definen en `.env` (`SUPERA
 
 ## Frontend
 
-Se puede abrir [frontend/src/index.html](frontend/src/index.html) directamente en un navegador, o servirlo desde el contenedor Apache incluido en Docker Compose (ver abajo). Es una SPA en JavaScript plano que consume la API REST (`API_BASE` al inicio de `app.js`, por defecto `http://localhost:8080`) y guarda la sesión (JWT) en `localStorage`.
+Se puede abrir [frontend/src/index.html](frontend/src/index.html) directamente en un navegador, o servirlo desde el contenedor Apache incluido en Docker Compose (ver abajo). `index.html` es una landing pública que explica el proyecto y lista las tiendas disponibles; cualquier acción (pedir un turno, crear cuenta) lleva a `login.html`, y tras ingresar se accede al panel en `app.html`. Está hecho en JavaScript plano con estructura MVC (`js/models`, `js/views`, `js/controllers`), consume la API REST (`API_BASE` en `js/config.js`, por defecto `http://localhost:8080`) y guarda la sesión (JWT) en `localStorage`.
 
 ## Servicios con Docker
 
 Todo el stack se levanta con Docker Compose:
 
-- **frontend** (`frontend/`): Apache HTTP Server sirviendo `frontend/src/index.html`, `app.js` y `styles.css`, montado como volumen para editar sin reconstruir la imagen.
+- **frontend** (`frontend/`): Apache HTTP Server sirviendo `frontend/src/` (`index.html`, `login.html`, `app.html`, `js/`, `assets/`, `templates/`), montado como volumen para editar sin reconstruir la imagen.
 - **backend** (`backend/`): API REST en Spring Boot con autenticación JWT.
 - **mysql**: base de datos donde persisten usuarios, tiendas, horarios y turnos.
 - **phpmyadmin**: administración web de MySQL.
@@ -76,7 +76,7 @@ Todo el stack se levanta con Docker Compose:
 
 ### Solución de problemas
 
-- **No veo los cambios en "Mi tienda" o en las tarjetas:** el frontend se monta como volumen, pero el navegador puede conservar `app.js` y las vistas anteriores. Recargar sin caché con `Ctrl + F5`.
+- **No veo los cambios en "Mi tienda" o en las tarjetas:** el frontend se monta como volumen, pero el navegador puede conservar los archivos `.js` y las plantillas anteriores. Recargar sin caché con `Ctrl + F5`.
 - **La foto no se guarda o la API ignora `imagenTienda`:** el contenedor del backend corresponde a una imagen anterior. Reconstruirlo con `docker compose up -d --build backend` (la columna `imagen_tienda` se crea sola al iniciar).
 
 ### Endpoints de la API
@@ -132,12 +132,11 @@ backend/
   Dockerfile              # build multi-stage (Maven -> JRE)
   pom.xml
   src/main/java/com/turnoya/backend/
-    model/                # Usuario, Rol, Tienda, Horario, Turno, EstadoTurno
-    repository/           # Repositorios Spring Data JPA
-    dto/                  # Request/response de la API
-    service/               # Reglas de negocio (auth, tiendas, horarios, turnos, admin)
-    controller/            # Endpoints REST
-    security/              # JWT (generación/validación) y UserDetailsService
+    model/                # MODELO: entidades JPA y enums (Usuario, Rol, Tienda, Horario, Turno, EstadoTurno)
+    repository/           # MODELO: repositorios Spring Data JPA
+    service/              # MODELO: reglas de negocio (auth, tiendas, horarios, turnos, admin)
+    controller/           # CONTROLADOR: endpoints REST
+    view/                 # VISTA: representación JSON de la API (request/response)    security/              # JWT (generación/validación) y UserDetailsService
     exception/             # Manejo centralizado de errores
     config/                # Spring Security, CORS y bootstrap del super admin
 ```
@@ -148,9 +147,16 @@ backend/
 frontend/
   Dockerfile              # httpd:2.4-alpine, copia src/ a /usr/local/apache2/htdocs
   src/
-    index.html
-    app.js
-    styles.css
+    index.html            # Landing pública: qué es Turno Ya y tiendas disponibles
+    login.html            # Ingreso y registro
+    app.html              # Panel privado (cliente, admin de tienda o super admin)
+    assets/               # css/ e images/
+    templates/            # VISTA: fragmentos HTML de cada panel
+    js/
+      config.js           # API_BASE y páginas del sitio
+      models/             # MODELO: acceso a la API y sesión (ApiClient, SessionModel, TiendaModel, ...)
+      views/              # VISTA: renderizado del DOM, sin llamadas a la API
+      controllers/        # CONTROLADOR: eventos, coordinan modelos y vistas
 ```
 
 En Docker Compose, `frontend/src` se monta como volumen sobre `/usr/local/apache2/htdocs` del contenedor: los cambios en esos archivos se reflejan al instante (solo hay que refrescar el navegador, sin `docker compose up --build`).

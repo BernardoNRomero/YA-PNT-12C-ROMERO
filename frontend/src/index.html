@@ -3,15 +3,101 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Turno Ya, gestión simple de turnos." />
-    <title>Turno Ya | Gestión de turnos</title>
-    <link rel="stylesheet" href="styles.css" />
+    <meta name="description" content="Turno Ya: pedí y gestioná turnos en tus tiendas favoritas." />
+    <title>Turno Ya | Pedí tu turno online</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link rel="stylesheet" href="assets/css/landing.css" />
   </head>
   <body>
-    <div id="app-header"></div>
+    <header class="topbar">
+      <a class="brand" href="index.html" aria-label="Turno Ya, inicio">
+        <span class="brand-mark">TY</span>
+        <span>Turno Ya</span>
+      </a>
+      <nav aria-label="Navegación principal">
+        <a href="#como-funciona">Cómo funciona</a>
+        <a href="#tiendas">Tiendas</a>
+        <a href="#para-tiendas">Para tiendas</a>
+      </nav>
+      <div id="nav-guest" class="user-box">
+        <a class="button" href="login.html">Ingresar</a>
+        <a class="button primary" href="login.html#registro">Crear cuenta</a>
+      </div>
+      <div id="nav-user" class="user-box" hidden>
+        <span id="landing-user-name"></span>
+        <a id="nav-panel" class="button primary" href="app.html">Ir a mi panel</a>
+        <button id="landing-logout" class="button" type="button">Salir</button>
+      </div>
+    </header>
 
-    <main id="app-main"></main>
+    <main class="landing">
+      <section class="hero">
+        <p class="eyebrow">Gestión simple de turnos</p>
+        <h1>Reservá tu turno sin llamadas ni esperas</h1>
+        <p class="hero-text">
+          Turno Ya conecta a clientes con tiendas y comercios de servicios. Elegí una tienda, pedí el día y horario que
+          prefieras y seguí el estado de tu turno desde un solo lugar.
+        </p>
+        <div class="hero-actions">
+          <a class="button primary" href="#tiendas">Ver tiendas disponibles</a>
+          <a class="button" href="login.html#registro">Crear mi cuenta</a>
+        </div>
+      </section>
 
-    <script src="app.js"></script>
+      <section id="como-funciona" class="landing-section">
+        <p class="eyebrow">Cómo funciona</p>
+        <h2>Tres pasos para tener tu turno</h2>
+        <div class="steps-grid">
+          <article class="panel step">
+            <span class="step-number">1</span>
+            <h3>Elegí una tienda</h3>
+            <p>Explorá las tiendas disponibles, su descripción, dirección y horarios de atención.</p>
+          </article>
+          <article class="panel step">
+            <span class="step-number">2</span>
+            <h3>Pedí tu turno</h3>
+            <p>Indicá fecha, horario y servicio. La tienda recibe tu solicitud al instante.</p>
+          </article>
+          <article class="panel step">
+            <span class="step-number">3</span>
+            <h3>Seguilo en tu calendario</h3>
+            <p>Consultá si fue aceptado, realizado o cancelado y administrá tus turnos cuando quieras.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="tiendas" class="landing-section">
+        <p class="eyebrow">Tiendas</p>
+        <h2>Tiendas disponibles</h2>
+        <p class="section-lead">Para pedir un turno necesitás iniciar sesión o crear una cuenta gratuita.</p>
+        <div id="tiendas-list" class="tiendas-grid" aria-live="polite">
+          <p class="empty-state">Cargando tiendas…</p>
+        </div>
+      </section>
+
+      <section id="para-tiendas" class="landing-section cta-panel">
+        <div>
+          <p class="eyebrow">¿Tenés una tienda?</p>
+          <h2>Organizá tu agenda con Turno Ya</h2>
+          <p>
+            Registrá tu comercio, cargá tus horarios de atención y aceptá o rechazá solicitudes desde tu panel de
+            administración.
+          </p>
+        </div>
+        <a class="button primary" href="login.html#registro">Registrar mi tienda</a>
+      </section>
+    </main>
+
+    <footer class="landing-footer">
+      <p>Turno Ya · Gestión de turnos para tiendas y clientes</p>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/models/SessionModel.js"></script>
+    <script src="js/models/ApiClient.js"></script>
+    <script src="js/models/TiendaModel.js"></script>
+    <script src="js/views/FormatView.js"></script>
+    <script src="js/views/TiendaView.js"></script>
+    <script src="js/controllers/LandingController.js"></script>
   </body>
 </html>

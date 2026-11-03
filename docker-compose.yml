@@ -73,7 +73,7 @@ services:
     networks:
       - turnoya-net
 
-  # Frontend estatico (index.html/app.js/styles.css) servido con Apache HTTP Server.
+  # Frontend estatico (index.html, login.html, app.html, js/, assets/) servido con Apache HTTP Server.
   frontend:
     build:
       context: ./frontend
