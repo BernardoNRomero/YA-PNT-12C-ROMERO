@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Ingresá o creá tu cuenta en Turno Ya." />
+    <title>Turno Ya | Ingresar</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link rel="stylesheet" href="assets/css/landing.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="index.html" aria-label="Turno Ya, inicio">
+        <span class="brand-mark">TY</span>
+        <span>Turno Ya</span>
+      </a>
+      <nav aria-label="Navegación principal">
+        <a href="index.html">← Volver al inicio</a>
+      </nav>
+    </header>
+
+    <main>
+      <section id="vista-auth" class="auth-grid">
+        <div class="panel form-panel">
+          <p class="eyebrow">Ya tengo cuenta</p>
+          <h2>Iniciar sesión</h2>
+          <form id="login-form" novalidate>
+            <label>Usuario
+              <input name="nombreUsuario" type="text" required />
+            </label>
+            <label>Contraseña
+              <input name="password" type="password" required />
+            </label>
+            <p class="form-message" id="login-message" role="alert"></p>
+            <button class="button primary full" type="submit">Ingresar</button>
+          </form>
+        </div>
+
+        <div class="panel form-panel" id="registro">
+          <p class="eyebrow">Soy nuevo</p>
+          <h2>Crear una cuenta</h2>
+          <form id="register-form" novalidate>
+            <label>Quiero
+              <select name="rol" id="register-rol" required>
+                <option value="CLIENTE">Pedir turnos (cliente)</option>
+                <option value="ADMIN">Dar turnos, tengo una tienda (administrador)</option>
+              </select>
+            </label>
+            <label id="register-tienda-label">Nombre de la tienda
+              <input name="nombreTienda" type="text" placeholder="Ej. Peluquería Ana" />
+            </label>
+            <label>Nombre y apellido
+              <input name="nombreCompleto" type="text" required />
+            </label>
+            <label>Usuario
+              <input name="nombreUsuario" type="text" required minlength="3" />
+            </label>
+            <label>Correo electrónico
+              <input name="correo" type="email" required />
+            </label>
+            <label>Contraseña
+              <input name="password" type="password" required minlength="8" />
+            </label>
+            <p class="form-message" id="register-message" role="alert"></p>
+            <button class="button primary full" type="submit">Crear cuenta</button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/models/SessionModel.js"></script>
+    <script src="js/models/ApiClient.js"></script>
+    <script src="js/models/AuthModel.js"></script>
+    <script src="js/controllers/LoginController.js"></script>
+  </body>
+</html>

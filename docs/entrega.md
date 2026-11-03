@@ -17,7 +17,7 @@
 
 ## 2. Alcance
 
-**Incluye:** registro e inicio de sesión por rol, alta de tiendas, definición de horarios de atención, solicitud y cancelación de turnos, gestión del ciclo de vida del turno (aceptar/rechazar/marcar como realizado), gestión de perfil de usuario (nombre, foto, contraseña), estadísticas globales y administración de usuarios (altas, bajas y modificaciones).
+**Incluye:** landing pública con la descripción del sistema y las tiendas disponibles, registro e inicio de sesión por rol, alta de tiendas, definición de horarios de atención, solicitud y cancelación de turnos, gestión del ciclo de vida del turno (aceptar/rechazar/marcar como realizado), gestión de perfil de usuario (nombre, foto, contraseña), estadísticas globales y administración de usuarios (altas, bajas y modificaciones).
 
 **No incluye:** pagos en línea, envío de correos o mensajes automáticos, integración con calendarios externos, administración de múltiples sucursales por una misma tienda ni recuperación de contraseña por correo.
 
@@ -25,11 +25,22 @@
 
 | Actor | Acciones permitidas |
 | --- | --- |
+| Visitante (sin sesión) | Accede a la landing pública, conoce el sistema y ve las tiendas disponibles con sus horarios. Al intentar pedir un turno o crear una cuenta es redirigido al login. |
 | Cliente | Se registra, inicia sesión, visualiza las tiendas disponibles junto a sus horarios, solicita turnos, cancela sus propios turnos y gestiona su perfil (nombre, foto de perfil y contraseña). |
 | Administrador (tienda) | Se registra creando el perfil de su tienda, inicia sesión, define los horarios de atención, consulta la agenda de su tienda y trabaja cada turno (acepta, rechaza o marca como realizado), edita el perfil de la tienda y gestiona su propio perfil. |
 | Super administrador | Cuenta creada automáticamente al iniciar el sistema (no se registra públicamente). Visualiza estadísticas globales (usuarios, tiendas y turnos) y gestiona usuarios: altas, bajas y modificaciones de cualquier rol. |
 
 ## 4. Flujos funcionales
+
+### Navegación desde la landing
+
+**Descripción:** Cualquier visitante conoce el sistema sin necesidad de cuenta.
+**Paso a paso:**
+1. Ingresa a `index.html` y lee qué es Turno Ya y cómo funciona.
+2. Explora las tiendas disponibles (foto, descripción, dirección y horarios).
+3. Al presionar "Pedir turno", "Ingresar", "Crear cuenta" o "Registrar mi tienda" es enviado a `login.html`. Si ya tenía sesión iniciada, va directo a su panel (`app.html`).
+
+**Resultado esperado:** Solo se puede operar (pedir turnos, administrar) con sesión iniciada.
 
 ### Registro e inicio de sesión
 
@@ -40,7 +51,7 @@
 3. El sistema valida los datos, crea la cuenta (y la tienda si corresponde) e inicia sesión automáticamente.
 4. En accesos posteriores, inicia sesión con usuario y contraseña.
 
-**Resultado esperado:** El usuario queda autenticado y ve el panel correspondiente a su rol (cliente, administrador o super administrador).
+**Resultado esperado:** El usuario queda autenticado y es llevado a `app.html`, donde ve el panel correspondiente a su rol (cliente, administrador o super administrador). Al cerrar sesión vuelve a la landing.
 
 ### Definición de horarios de atención
 
@@ -56,7 +67,7 @@
 
 **Descripción:** Un cliente elige una tienda disponible y solicita un turno.
 **Paso a paso:**
-1. Visualiza en la pantalla principal las tiendas activas con su foto (o una imagen por defecto), descripción y horarios de atención.
+1. Visualiza en la pestaña "Tiendas disponibles" de su panel (o en la landing, antes de iniciar sesión) las tiendas activas con su foto (o una imagen por defecto), descripción y horarios de atención.
 2. Presiona "Pedir turno": se abre una pantalla ampliada con la foto, la descripción, la dirección y los horarios de la tienda.
 3. Elige fecha, horario y servicio en el formulario de esa pantalla.
 4. El sistema verifica los datos obligatorios, que la fecha/hora no haya pasado (según la zona horaria configurada) y que el horario no esté ocupado en esa tienda.
@@ -105,7 +116,28 @@
 
 ## 5. Maquetas de pantallas
 
-### Login / registro
+### Landing (index.html)
+
+```text
++--------------------------------------------------------------+
+| (TY) Turno Ya   Cómo funciona  Tiendas  Para tiendas         |
+|                                  [ Ingresar ] [ Crear cuenta ]|
++--------------------------------------------------------------+
+| Reservá tu turno sin llamadas ni esperas                      |
+| [ Ver tiendas disponibles ]  [ Crear mi cuenta ]              |
++--------------------------------------------------------------+
+| Cómo funciona:  1 Elegí tienda | 2 Pedí turno | 3 Seguilo     |
++--------------------------------------------------------------+
+| Tiendas disponibles                                           |
+| [foto] Tienda A   [foto] Tienda B   [foto] Tienda C           |
+| horarios...       horarios...       horarios...               |
+| [Pedir turno]     [Pedir turno]     [Pedir turno]  -> login   |
++--------------------------------------------------------------+
+| ¿Tenés una tienda?  [ Registrar mi tienda ] -> login          |
++--------------------------------------------------------------+
+```
+
+### Login / registro (login.html)
 
 ```text
 +--------------------------------------------------------------+
@@ -196,6 +228,8 @@ Al presionar "Pedir turno" se abre una pantalla ampliada:
 - **RF14:** El administrador debe poder subir, cambiar y quitar la foto de su tienda.
 - **RF15:** El cliente debe ver la foto de cada tienda (o una imagen por defecto) y, al pedir turno, una pantalla ampliada con foto, descripción y demás información de la tienda.
 - **RF16:** El sistema debe rechazar turnos cuya fecha y hora ya hayan pasado.
+- **RF17:** El sistema debe ofrecer una landing pública que describa el proyecto y muestre las tiendas disponibles sin requerir sesión.
+- **RF18:** Toda acción que requiera una cuenta (pedir turno, registrarse, administrar) iniciada desde la landing debe redirigir al login; el panel privado debe exigir sesión.
 
 ## 8. Requisitos no funcionales
 
@@ -204,6 +238,17 @@ Al presionar "Pedir turno" se abre una pantalla ampliada:
 - **Seguridad:** las contraseñas se almacenan hasheadas (BCrypt); el acceso a la API se controla mediante tokens JWT y autorización por rol; el super administrador no es auto-registrable.
 - **Compatibilidad:** debe ejecutarse en navegadores modernos sin instalación adicional.
 - **Despliegue:** el sistema se distribuye mediante contenedores Docker (frontend, backend y base de datos) para facilitar su instalación.
+- **Arquitectura:** patrón Modelo-Vista-Controlador (ver sección siguiente).
+
+## 8 bis. Arquitectura MVC
+
+**Backend (Spring Boot, API REST):** `model/` (entidades JPA y enums), `repository/` (Spring Data) y `service/` (reglas de negocio) conforman el modelo; `controller/` expone los endpoints REST; `view/` define la representación JSON (request/response) que recibe el cliente. `security/`, `config/` y `exception/` son transversales.
+
+**Frontend (JavaScript plano):**
+- **Modelo** (`js/models/`): `ApiClient` (único acceso al backend), `SessionModel` (JWT en `localStorage`) y modelos de dominio (`AuthModel`, `TiendaModel`, `TurnoModel`, `UsuarioModel`).
+- **Vista** (`js/views/` y `templates/`): renderizan el DOM sin llamar a la API.
+- **Controlador** (`js/controllers/`): atienden los eventos y coordinan modelos y vistas (`LandingController`, `LoginController`, `AppController`, `ClienteController`, `TiendaAdminController`, `SuperAdminController`, `PerfilController`).
+- **Páginas:** `index.html` (landing pública), `login.html` (ingreso/registro) y `app.html` (panel privado según rol).
 
 ## 9. Modelo de datos
 

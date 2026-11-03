@@ -1,5 +1,7 @@
 package com.turnoya.backend.security;
 
+import com.turnoya.backend.model.Rol;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
